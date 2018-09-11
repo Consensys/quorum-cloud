@@ -1,4 +1,8 @@
-This is to pave an environment with resources required for deployment. **This has to be run once per AWS Account and per region.**
+### `prepareEnvironment`
+
+This is to pave an environment with resources required for deployment. 
+
+This has to be run once **per AWS Account and per region**.
 
 ```
 aws cloud-formation create-stack --stack-name quorum-prepare-environment --template-body file://./quorum-prepare-environment.cfn.yml
