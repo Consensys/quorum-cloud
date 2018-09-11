@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create resources required prior to Quorum deployment
+Resources:
+  DeploymentStateBucketKey:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: This is used to encrypt/decrypt objects stored in Quorum deployment state bucket
+      Enabled: True
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: quorum-deployment-state-key-permissions
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "kms:*"
+            Resource: "*"
+  DeploymentStateBucketKeyAlias:
+    Type: "AWS::KMS::Alias"
+    Properties:
+      AliasName: !Sub "alias/${AWS::Region}-quorum-deployment-state"
+      TargetKeyId: !Ref DeploymentStateBucketKey
+  DeploymentStateBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Sub "${AWS::Region}-quorum-deployment-state-${AWS::AccountId}"
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+            SSEAlgorithm: "aws:kms"
+            KMSMasterKeyID: !Ref DeploymentStateBucketKey
+      VersioningConfiguration:
+        Status: Enabled
+  DeploymentStateBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref DeploymentStateBucket
+      PolicyDocument:
+        Statement:
+          - Sid: "Allow access for IAM Users"
+            Action: "s3:*"
+            Effect: "Allow"
+            Resource:
+            - !Join ["", ["arn:aws:s3:::", !Ref DeploymentStateBucket]]
+            - !Join ["", ["arn:aws:s3:::", !Ref DeploymentStateBucket, "/*"]]
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          - Sid: "Deny access when no encryption header"
+            Action: "s3:PutObject"
+            Effect: "Deny"
+            Resource:
+            - !Join ["", ["arn:aws:s3:::", !Ref DeploymentStateBucket]]
+            - !Join ["", ["arn:aws:s3:::", !Ref DeploymentStateBucket, "/*"]]
+            Principal: "*"
+            Condition:
+              "Null":
+                s3:x-amz-server-side-encryption: "true"
+          - Sid: "Deny access when no aws:kms encryption algo header"
+            Action: "s3:PutObject"
+            Effect: "Deny"
+            Resource:
+            - !Join ["", ["arn:aws:s3:::", !Ref DeploymentStateBucket]]
+            - !Join ["", ["arn:aws:s3:::", !Ref DeploymentStateBucket, "/*"]]
+            Principal: "*"
+            Condition:
+              "StringNotEquals":
+                s3:x-amz-server-side-encryption: "aws:kms"
+Outputs:
+  DeploymentStateBucketName:
+    Description: >-
+      Bucket that stores Terraform states
+    Export:
+      Name: quorum-deployment-state-bucket-name
+    Value: !Ref DeploymentStateBucket
+  KeyAlias:
+    Description: ->
+      Key Alias of KMS Key used to encrypt/decrypt objects stored in Quorum deployment state bucket
+    Export:
+      Name: quorum-deployment-state-bucket-kms-key-alias
+    Value: !Ref DeploymentStateBucketKeyAlias
+  KeyARN:
+    Description: >-
+      Key ARN of KMS Key used to encrypt/decrypt objects stored in Quorum deployment state bucket
+    Export:
+      Name: quorum-deployment-state-bucket-kms-key-arn
+    Value: !GetAtt
+      - DeploymentStateBucketKey
+      - Arn
