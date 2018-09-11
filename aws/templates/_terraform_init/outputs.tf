@@ -3,10 +3,11 @@ output "message" {
 Completed!
 
 Region       : ${var.region}
-Deployment ID: ${var.deployment_id}
+Deployment ID: ${local.deployment_id}
 
-Generated ${local.filename}
+Generated ... ${local.tfinit_filename}
+Generated ... ${local.tfvars_filename}
 
-Now you can do `terraform init -backend-config=${local.filename}` from ${dirname(local_file.tfinit.filename)}
+Now you can do `terraform init -backend-config=${local.tfinit_filename}` from ${dirname(local_file.tfinit.filename)}
 msg
 }
