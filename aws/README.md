@@ -12,3 +12,12 @@ aws cloud-formation create-stack --stack-name quorum-prepare-environment --templ
 * A KMS Key to encrypt objects stored in the above S3 bucket
 
 These above resources are exposed to CloudFormation Exports which will be used in subsequent Terraform executions
+
+### `_terraform_init`
+
+This is to generate the backend configuration for `terraform init` by reading various CloudFormation Exports (from the above) and writing to a file.
+
+```
+terraform init
+terraform apply -auto-approve
+```
