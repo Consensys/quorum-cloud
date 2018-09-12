@@ -8,9 +8,9 @@ locals {
       logDriver = "awslogs"
 
       options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}/geth"
+        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
         awslogs-region        = "${var.region}"
-        awslogs-stream-prefix = "geth"
+        awslogs-stream-prefix = ""
       }
     }
 

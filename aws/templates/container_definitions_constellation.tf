@@ -12,9 +12,9 @@ locals {
         logDriver = "awslogs"
 
         options = {
-          awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}/${var.tx_privacy_engine}/bootstrap"
+          awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
           awslogs-region        = "${var.region}"
-          awslogs-stream-prefix = "${var.tx_privacy_engine}-bootstrap"
+          awslogs-stream-prefix = ""
         }
       }
 
@@ -50,9 +50,9 @@ locals {
         logDriver = "awslogs"
 
         options = {
-          awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}/${var.tx_privacy_engine}/run"
+          awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
           awslogs-region        = "${var.region}"
-          awslogs-stream-prefix = "${var.tx_privacy_engine}-run"
+          awslogs-stream-prefix = ""
         }
       }
 
@@ -66,6 +66,12 @@ locals {
         {
           sourceVolume  = "${local.shared_volume_name}"
           containerPath = "${local.shared_volume_container_path}"
+        },
+      ]
+
+      volumesFrom = [
+        {
+          sourceContainer = "${var.tx_privacy_engine}-bootstrap"
         },
       ]
 

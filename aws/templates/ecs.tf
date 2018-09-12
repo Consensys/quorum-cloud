@@ -8,6 +8,8 @@ resource "aws_ecs_task_definition" "quorum" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "4096"
   memory                   = "8192"
+  network_mode             = "awsvpc"
+  execution_role_arn       = "${aws_iam_role.ecs_task.arn}"
 
   volume {
     name = "${local.shared_volume_name}"
@@ -19,7 +21,6 @@ resource "aws_ecs_service" "quorum" {
   name            = "quorum-service-${var.deployment_id}-${count.index}"
   cluster         = "${aws_ecs_cluster.quorum.id}"
   task_definition = "${aws_ecs_task_definition.quorum.arn}"
-  iam_role        = "${aws_iam_role.ecs.name}"
   launch_type     = "FARGATE"
   desired_count   = "1"
 

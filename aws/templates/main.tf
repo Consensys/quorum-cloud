@@ -25,8 +25,8 @@ locals {
 
   common_tags = {
     "DeploymentId"              = "${var.deployment_id}"
-    "DockerImage:Quorum"        = "${local.quorum_docker_image}"
-    "DockerImage:PrivacyEngine" = "${local.tx_privacy_engine_docker_image}"
+    "DockerImage.Quorum"        = "${local.quorum_docker_image}"
+    "DockerImage.PrivacyEngine" = "${local.tx_privacy_engine_docker_image}"
   }
 }
 
