@@ -11,6 +11,15 @@ variable "number_of_nodes" {
   default     = "7"
 }
 
+variable "subnet_ids" {
+  type        = "list"
+  description = "List of subnet ids used by ECS to create instances. These subnets must be routable to the internet, via Internet Gateway or NAT instance"
+}
+
+variable "is_igw_subnets" {
+  description = "Indicate that if subnets supplied in subnet_ids are routable to the internet via Internet Gateway"
+}
+
 variable "quorum_docker_image" {
   description = "URL to Quorum docker image to be used"
   default     = "quorumengineering/quorum"

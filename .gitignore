@@ -18,4 +18,5 @@ target/
 **/terraform.tfstate*
 **/.terraform*
 **/terraform.auto.*
-**/quorum.pem
+**/*.tfplan
+**/*.tfvars

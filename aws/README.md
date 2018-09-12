@@ -1,4 +1,10 @@
-### `prepareEnvironment`
+## Deployment Architecture
+
+TBD
+
+## Getting Started
+
+### Step 1: `prepareEnvironment`
 
 This is to pave an environment with resources required for deployment. 
 
@@ -13,7 +19,7 @@ aws cloud-formation create-stack --stack-name quorum-prepare-environment --templ
 
 These above resources are exposed to CloudFormation Exports which will be used in subsequent Terraform executions
 
-### `_terraform_init`
+### Step 2: `_terraform_init`
 
 This is to generate the backend configuration for `terraform init` by reading various CloudFormation Exports (from the above) and writing to a file.
 
@@ -21,3 +27,15 @@ This is to generate the backend configuration for `terraform init` by reading va
 terraform init
 terraform apply -auto-approve
 ```
+
+### Step 3: Provisioning Quorum
+
+```
+terraform init -backend-config=terraform.auto.backend-config
+terraform plan -out quorum.tfplan
+terraform apply quorum.tfplan
+```
+
+## Logging
+
+CloudWatch Log Group `/ecs/quorum/**`

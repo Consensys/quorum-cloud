@@ -13,16 +13,7 @@ resource "aws_security_group" "quorum" {
   tags = "${merge(local.common_tags, map("Name", format("quorum-sg-%s", var.deployment_id)))}"
 }
 
-resource "aws_security_group_rule" "ssh" {
-  from_port         = 22
-  protocol          = "tcp"
-  security_group_id = "${aws_security_group.quorum.id}"
-  to_port           = 22
-  type              = "ingress"
-  description       = "SSH"
-}
-
-resource "aws_security_group_rule" "geth" {
+resource "aws_security_group_rule" "geth_p2p" {
   from_port         = 30400
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"
@@ -32,7 +23,7 @@ resource "aws_security_group_rule" "geth" {
   description       = "Geth P2P traffic"
 }
 
-resource "aws_security_group_rule" "geth" {
+resource "aws_security_group_rule" "geth_admin_rpc" {
   from_port         = 40400
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"
@@ -44,10 +35,10 @@ resource "aws_security_group_rule" "geth" {
 
 resource "aws_security_group_rule" "constellation" {
   count             = "${var.tx_privacy_engine == "constellation" ? 1 : 0}"
-  from_port         = 50400
+  from_port         = "${local.constellation_port}"
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"
-  to_port           = 50900
+  to_port           = "${local.constellation_port}"
   type              = "ingress"
   self              = "true"
   description       = "Constellation traffic"

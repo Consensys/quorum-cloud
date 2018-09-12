@@ -4,6 +4,19 @@ terraform {
   }
 }
 
+provider "aws" {
+  region  = "${var.region}"
+  version = "~> 1.35"
+}
+
+provider "null" {
+  version = "~> 1.0"
+}
+
+provider "tls" {
+  version = "~> 1.2"
+}
+
 locals {
   tessera_docker_image           = "${var.tx_privacy_engine == "tessera" ? format("%s:%s", var.tessera_docker_image, var.tessera_docker_image_tag) : ""}"
   constellation_docker_image     = "${var.tx_privacy_engine == "constellation" ? format("%s:%s", var.constellation_docker_image, var.constellation_docker_image_tag) : ""}"
