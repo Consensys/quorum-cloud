@@ -1,3 +1,7 @@
+locals {
+  service_name_fmt = "node-%0${min(length(format("%d", var.number_of_nodes)), length(format("%s", var.number_of_nodes))) + 1}d-%s"
+}
+
 resource "aws_ecs_cluster" "quorum" {
   name = "quorum-network-${var.deployment_id}"
 }
@@ -18,7 +22,7 @@ resource "aws_ecs_task_definition" "quorum" {
 
 resource "aws_ecs_service" "quorum" {
   count           = "${var.number_of_nodes}"
-  name            = "quorum-service-${var.deployment_id}-${count.index}"
+  name            = "${format(local.service_name_fmt, count.index, var.deployment_id)}"
   cluster         = "${aws_ecs_cluster.quorum.id}"
   task_definition = "${aws_ecs_task_definition.quorum.arn}"
   launch_type     = "FARGATE"
