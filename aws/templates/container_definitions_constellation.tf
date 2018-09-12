@@ -86,10 +86,10 @@ locals {
       }
 
       command = [
-        "--url=http://$(hostname -i):${local.constellation_port}",
+        "--url=http://$(hostname -i):${local.constellation_port}/",
         "--port=${local.constellation_port}",
         "--socket=${local.constellation_socket_file}",
-        "--othernodes=http://localhost:${local.constellation_port}",
+        "--othernodes=http://localhost:${local.constellation_port}/",
         "--publickeys=${local.shared_volume_container_path}/tm.pub",
         "--privatekeys=${local.shared_volume_container_path}/tm.key",
         "--storage=/constellation",
