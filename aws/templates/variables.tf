@@ -50,6 +50,16 @@ variable "tessera_docker_image_tag" {
   default     = "latest"
 }
 
+variable "aws_cli_docker_image" {
+  description = "To interact with AWS services"
+  default = "infrastructureascode/aws-cli"
+}
+
+variable "aws_cli_docker_image_tag" {
+  description = "AWS CLI Docker image tag to be used"
+  default = "latest"
+}
+
 variable "concensus_mechanism" {
   description = "Concensus mechanism used in the network. Supported values are raft/istanbul"
   default     = "raft"
@@ -58,4 +68,12 @@ variable "concensus_mechanism" {
 variable "tx_privacy_engine" {
   description = "Engine that implements transaction privacy. Supported values are constellation/tessera"
   default     = "constellation"
+}
+
+variable "quorum_bucket" {
+  description = "This is to store shared data during the bootstrap. This must be pre-initialized from `_terraform_init` run"
+}
+
+variable "quorum_bucket_kms_key_arn" {
+  description = "To encrypt/decrypt objects stored in quorum_bucket. This must be pre-initialized from `_terraform_init` run"
 }

@@ -2,10 +2,23 @@ locals {
   constellation_socket_file = "${local.shared_volume_container_path}/tm.ipc"
   constellation_port        = 10000
 
+  host_bootstrap_commands = [
+    "apk update",
+    "apk add curl jq",
+    "export TASK_REVISION=$(curl -s 169.254.170.2/v2/metadata | jq '.Revision' -r)",
+    "echo \"Task Revision: $TASK_REVISION\"",
+    "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )",
+    "echo \"Host IP: $HOST_IP\"",
+    "echo $HOST_IP > ${local.shared_volume_container_path}/host_ip",
+    "aws sts get-caller-identity",
+    "aws s3 cp ${local.shared_volume_container_path}/host_ip s3://${local.quorum_bucket}/rev_$TASK_REVISION/hosts/ip_$(echo $HOST_IP | sed -e 's/\\./_/g') --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
+    "",
+  ]
+
   constellation_container_definitions = [
     {
       name      = "host-bootstrap"
-      image     = "alpine:latest"
+      image     = "${local.aws_cli_docker_image}"
       essential = "false"
 
       logConfiguration = {
@@ -38,7 +51,7 @@ locals {
       entryPoint = [
         "/bin/sh",
         "-c",
-        "apk update\napk add curl jq\ncurl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r > ${local.shared_volume_container_path}/host_ip\ncat ${local.shared_volume_container_path}/host_ip",
+        "${join("\n", local.host_bootstrap_commands)}",
       ]
 
       dockerLabels = "${local.common_tags}"

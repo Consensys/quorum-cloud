@@ -13,6 +13,7 @@ resource "aws_ecs_task_definition" "quorum" {
   cpu                      = "4096"
   memory                   = "8192"
   network_mode             = "awsvpc"
+  task_role_arn            = "${aws_iam_role.ecs_task.arn}"
   execution_role_arn       = "${aws_iam_role.ecs_task.arn}"
 
   volume {
