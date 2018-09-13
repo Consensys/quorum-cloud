@@ -38,7 +38,7 @@ locals {
       entryPoint = [
         "/bin/sh",
         "-c",
-        "apk update\napk add curl jq\ncurl 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r > ${local.shared_volume_container_path}/host_ip | tee",
+        "apk update\napk add curl jq\ncurl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r > ${local.shared_volume_container_path}/host_ip\ncat ${local.shared_volume_container_path}/host_ip",
       ]
 
       dockerLabels = "${local.common_tags}"
@@ -129,10 +129,10 @@ locals {
       }
 
       command = [
-        "--url=http://$(curl http://169.254.169.254/latest/meta-data/local-ipv4):${local.constellation_port}/",
+        "--url=http://$(cat ${local.shared_volume_container_path}/host_ip):${local.constellation_port}/",
         "--port=${local.constellation_port}",
         "--socket=${local.constellation_socket_file}",
-        "--othernodes=http://$(hostname -i):${local.constellation_port}/",
+        "--othernodes=http://$(cat ${local.shared_volume_container_path}/host_ip):${local.constellation_port}/",
         "--publickeys=${local.shared_volume_container_path}/tm.pub",
         "--privatekeys=${local.shared_volume_container_path}/tm.key",
         "--storage=/constellation",
