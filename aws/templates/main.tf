@@ -32,9 +32,3 @@ locals {
     "DockerImage.PrivacyEngine" = "${local.tx_privacy_engine_docker_image}"
   }
 }
-
-resource "tls_private_key" "keys" {
-  count       = "${var.number_of_nodes}"
-  algorithm   = "ECDSA"
-  ecdsa_curve = "P256"
-}

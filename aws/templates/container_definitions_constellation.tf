@@ -1,18 +1,23 @@
 locals {
   constellation_socket_file = "${local.shared_volume_container_path}/tm.ipc"
+  constellation_config_file = "${local.shared_volume_container_path}/constellation.cfg"
   constellation_port        = 10000
 
   host_bootstrap_commands = [
     "apk update",
-    "apk add curl jq",
+    "apk add curl jq inotify-tools",
     "export TASK_REVISION=$(curl -s 169.254.170.2/v2/metadata | jq '.Revision' -r)",
     "echo \"Task Revision: $TASK_REVISION\"",
     "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )",
     "echo \"Host IP: $HOST_IP\"",
     "echo $HOST_IP > ${local.shared_volume_container_path}/host_ip",
+    "mkdir -p ${local.shared_volume_container_path}/hosts",
     "aws sts get-caller-identity",
     "aws s3 cp ${local.shared_volume_container_path}/host_ip s3://${local.quorum_bucket}/rev_$TASK_REVISION/hosts/ip_$(echo $HOST_IP | sed -e 's/\\./_/g') --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
-    "",
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.quorum_bucket}/rev_$TASK_REVISION/hosts ${local.shared_volume_container_path}/hosts/; count=$(ls ${local.shared_volume_container_path}/hosts | grep ^ip | wc -l); echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 3; done",
+    "echo \"All containers reported their IPs\"",
+    "all=\"\"; for f in `ls ${local.shared_volume_container_path}/hosts`; do ip=$(cat ${local.shared_volume_container_path}/hosts/$f); all=\"$all,\\\"http://$ip:${local.constellation_port}/\\\"\"; done; all=$${all:1}",
+    "echo \"{\"cfgOtherNodes\": [$all]}\" | jq --arg url \"http://$HOST_IP:${local.constellation_port}/\" --arg port \"${local.constellation_port}\" --arg socket \"${local.constellation_socket_file}\" --arg publicKeys \"${local.shared_volume_container_path}/tm.pub\" --arg privateKeys \"${local.shared_volume_container_path}/tm.key\" '. | { cfgOtherNodes: .cfgOtherNodes, cfgUrl: $url, cfgPort: $port, cfgSocket : $socket, cfgPublicKeys: $publicKeys, cfgPrivateKeys: $privateKeys, cfgStorage: \"/constellation\", cfgVerbosity: 4}'",
   ]
 
   constellation_container_definitions = [
@@ -142,14 +147,7 @@ locals {
       }
 
       command = [
-        "--url=http://$(cat ${local.shared_volume_container_path}/host_ip):${local.constellation_port}/",
-        "--port=${local.constellation_port}",
-        "--socket=${local.constellation_socket_file}",
-        "--othernodes=http://$(cat ${local.shared_volume_container_path}/host_ip):${local.constellation_port}/",
-        "--publickeys=${local.shared_volume_container_path}/tm.pub",
-        "--privatekeys=${local.shared_volume_container_path}/tm.key",
-        "--storage=/constellation",
-        "--verbosity=4",
+        "${local.constellation_config_file}",
       ]
 
       dockerLabels = "${local.common_tags}"

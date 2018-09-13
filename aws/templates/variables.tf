@@ -52,12 +52,12 @@ variable "tessera_docker_image_tag" {
 
 variable "aws_cli_docker_image" {
   description = "To interact with AWS services"
-  default = "infrastructureascode/aws-cli"
+  default     = "infrastructureascode/aws-cli"
 }
 
 variable "aws_cli_docker_image_tag" {
   description = "AWS CLI Docker image tag to be used"
-  default = "latest"
+  default     = "latest"
 }
 
 variable "concensus_mechanism" {
