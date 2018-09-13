@@ -14,20 +14,20 @@ resource "aws_security_group" "quorum" {
 }
 
 resource "aws_security_group_rule" "geth_p2p" {
-  from_port         = 30400
+  from_port         = "${local.quorum_p2p_port}"
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"
-  to_port           = 30900
+  to_port           = "${local.quorum_p2p_port}"
   type              = "ingress"
   self              = true
   description       = "Geth P2P traffic"
 }
 
 resource "aws_security_group_rule" "geth_admin_rpc" {
-  from_port         = 40400
+  from_port         = "${local.quorum_rpc_port}"
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"
-  to_port           = 40900
+  to_port           = "${local.quorum_rpc_port}"
   type              = "ingress"
   self              = "true"
   description       = "Geth Admin RPC traffic"
@@ -46,10 +46,10 @@ resource "aws_security_group_rule" "constellation" {
 
 resource "aws_security_group_rule" "raft" {
   count             = "${var.concensus_mechanism == "raft" ? 1 : 0}"
-  from_port         = 9000
+  from_port         = "${local.raft_port}"
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"
-  to_port           = 9500
+  to_port           = "${local.raft_port}"
   type              = "ingress"
   self              = "true"
   description       = "Raft HTTP traffic"
