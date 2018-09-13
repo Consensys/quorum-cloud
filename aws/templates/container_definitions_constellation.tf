@@ -6,6 +6,8 @@ locals {
   host_bootstrap_commands = [
     "apk update",
     "apk add curl jq inotify-tools",
+    "curl -s 169.254.170.2/v2/metadata",
+    "curl -s localhost:51678/v1/metadata",
     "export TASK_REVISION=$(curl -s 169.254.170.2/v2/metadata | jq '.Revision' -r)",
     "echo \"Task Revision: $TASK_REVISION\"",
     "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )",
@@ -17,7 +19,16 @@ locals {
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.quorum_bucket}/rev_$TASK_REVISION/hosts ${local.shared_volume_container_path}/hosts/; count=$(ls ${local.shared_volume_container_path}/hosts | grep ^ip | wc -l); echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 3; done",
     "echo \"All containers reported their IPs\"",
     "all=\"\"; for f in `ls ${local.shared_volume_container_path}/hosts`; do ip=$(cat ${local.shared_volume_container_path}/hosts/$f); all=\"$all,\\\"http://$ip:${local.constellation_port}/\\\"\"; done; all=$${all:1}",
-    "echo \"{\"cfgOtherNodes\": [$all]}\" | jq --arg url \"http://$HOST_IP:${local.constellation_port}/\" --arg port \"${local.constellation_port}\" --arg socket \"${local.constellation_socket_file}\" --arg publicKeys \"${local.shared_volume_container_path}/tm.pub\" --arg privateKeys \"${local.shared_volume_container_path}/tm.key\" '. | { cfgOtherNodes: .cfgOtherNodes, cfgUrl: $url, cfgPort: $port, cfgSocket : $socket, cfgPublicKeys: $publicKeys, cfgPrivateKeys: $privateKeys, cfgStorage: \"/constellation\", cfgVerbosity: 4}'",
+    "echo \"\"> ${local.constellation_config_file}",
+    "echo \"url = \\\"http://$HOST_IP/\\\"\" >> ${local.constellation_config_file}",
+    "echo \"port = ${local.constellation_port}\" >> ${local.constellation_config_file}",
+    "echo \"socket = \\\"${local.constellation_socket_file}\\\"\" >> ${local.constellation_config_file}",
+    "echo \"othernodes = [$all]\" >> ${local.constellation_config_file}",
+    "echo \"publickeys = [\\\"${local.shared_volume_container_path}/tm.pub\\\"]\" >> ${local.constellation_config_file}",
+    "echo \"privatekeys = [\\\"${local.shared_volume_container_path}/tm.key\\\"]\" >> ${local.constellation_config_file}",
+    "echo \"storage = \\\"/constellation\\\"\" >> ${local.constellation_config_file}",
+    "echo \"verbosity = 4\" >> ${local.constellation_config_file}",
+    "cat ${local.constellation_config_file}",
   ]
 
   constellation_container_definitions = [
@@ -49,7 +60,7 @@ locals {
 
         command = [
           "CMD-SHELL",
-          "[ -S ${local.shared_volume_container_path}/host_ip ];",
+          "[ -S ${local.constellation_config_file} ];",
         ]
       }
 
