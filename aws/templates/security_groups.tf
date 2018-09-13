@@ -41,7 +41,7 @@ resource "aws_security_group_rule" "constellation" {
   to_port           = "${local.constellation_port}"
   type              = "ingress"
   self              = "true"
-  description       = "Constellation traffic"
+  description       = "Constellation Public API traffic"
 }
 
 resource "aws_security_group_rule" "raft" {
