@@ -38,7 +38,7 @@ locals {
       entryPoint = [
         "/bin/sh",
         "-c",
-        "apk update\napk add curl jq\ncurl 169.254.170.2/v2/metadata jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r > ${local.shared_volume_container_path}/host_ip | tee",
+        "apk update\napk add curl jq\ncurl 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"host-bootstrap\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r > ${local.shared_volume_container_path}/host_ip | tee",
       ]
 
       dockerLabels = "${local.common_tags}"
