@@ -2,6 +2,33 @@
 
 TBD
 
+### ECS Containers
+```
+           geth-key-gen
+                ^
+                |
+         config-bootstrap
+                ^
+              /   \
+             /     \
+ geth-bootstrap   privacy-engine-bootstrap
+        ^                   ^
+        |                   |
+        |            privacy-engine-run
+        |                   ^
+        |                   |
+        |-------------- geth-run  
+             
+```
+
+
+* `geth-key-gen`: run `bootnode` to create a node key, store it in shared folder
+* `config-bootstrap`: prepare IP list and enode list
+* `geth-bootstrap`: run `geth init`
+* `privacy-engine-bootstrap`: prepare config for the engine (Constallation/Tessera config)
+* `privacy-engine-run`: run Constellation/Tessera
+* `geth-run`: run `geth`
+
 ## Getting Started
 
 ### Step 1: `prepareEnvironment`
