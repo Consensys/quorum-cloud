@@ -14,19 +14,11 @@ TBD
                 ^
               /   \
              /     \
-  quorum-config   {tx-privacy-engine}-config
-        ^                   ^
-        |                   |
-        |            {tx-privacy-engine}-run
-        |                   ^
-        |                   |
-        |-------------- quorum-run  
+  quorum-run  --> {tx-privacy-engine}-run
              
   ```
   * `node-key-bootstrap`: run `bootnode` to generate a node key and marshall to node id, store them in shared folder
   * `metadata-bootstrap`: prepare IP list and enode list
-  * `quorum-config`: run `geth init`
-  * `{tx-privacy-engine}-bootstrap`: prepare config for the engine (Constallation/Tessera)
   * `{tx-privacy-engine}-run`: run Constellation/Tessera
   * `quorum-run`: run `geth`
 
