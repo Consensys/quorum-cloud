@@ -3,12 +3,10 @@ locals {
   shared_volume_container_path  = "/qdata"
   tx_privacy_engine_socket_file = "${local.shared_volume_container_path}/tm.ipc"
 
-  node_key_bootstrap_container_name          = "node-key-bootstrap"
-  metadata_bootstrap_container_name          = "metadata-bootstrap"
-  quorum_config_container_name               = "quorum-config"
-  quorum_run_container_name                  = "quorum-run"
-  tx_privacy_engine_bootstrap_container_name = "${var.tx_privacy_engine}-bootstrap"
-  tx_privacy_engine_run_container_name       = "${var.tx_privacy_engine}-run"
+  node_key_bootstrap_container_name    = "node-key-bootstrap"
+  metadata_bootstrap_container_name    = "metadata-bootstrap"
+  quorum_run_container_name            = "quorum-run"
+  tx_privacy_engine_run_container_name = "${var.tx_privacy_engine}-run"
 
   consensus_config = {
     raft = {
@@ -35,9 +33,8 @@ locals {
   container_definitions_for_constellation = [
     "${local.node_key_bootstrap_container_definition}",
     "${local.metadata_bootstrap_container_definition}",
-    "${local.quorum_config_container_definition}",
-    "${local.quorum_run_container_definition}",
-    "${local.constellation_config_container_definition}",
+
+    //"${local.quorum_run_container_definition}",
     "${local.constellation_run_container_definition}",
   ]
 

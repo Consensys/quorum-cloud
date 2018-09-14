@@ -3,11 +3,11 @@ locals {
 }
 
 resource "aws_ecs_cluster" "quorum" {
-  name = "quorum-network-${var.deployment_id}"
+  name = "quorum-network-${var.network_name}"
 }
 
 resource "aws_ecs_task_definition" "quorum" {
-  family                   = "quorum-${var.tx_privacy_engine}-${var.deployment_id}"
+  family                   = "quorum-${var.tx_privacy_engine}-${var.network_name}"
   container_definitions    = "${replace(element(compact(local.container_definitions), 0), "/\"(true|false|[0-9]+)\"/", "$1")}"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "4096"
@@ -23,7 +23,7 @@ resource "aws_ecs_task_definition" "quorum" {
 
 resource "aws_ecs_service" "quorum" {
   count           = "${var.number_of_nodes}"
-  name            = "${format(local.service_name_fmt, count.index, var.deployment_id)}"
+  name            = "${format(local.service_name_fmt, count.index, var.network_name)}"
   cluster         = "${aws_ecs_cluster.quorum.id}"
   task_definition = "${aws_ecs_task_definition.quorum.arn}"
   launch_type     = "FARGATE"

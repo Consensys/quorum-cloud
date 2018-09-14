@@ -24,10 +24,10 @@ locals {
   tx_privacy_engine_docker_image = "${coalesce(local.tessera_docker_image, local.constellation_docker_image)}"
   aws_cli_docker_image           = "${format("%s:%s", var.aws_cli_docker_image, var.aws_cli_docker_image_tag)}"
 
-  quorum_bucket = "${var.quorum_bucket}/${var.deployment_id}"
+  quorum_bucket = "${var.quorum_bucket}/${var.network_name}"
 
   common_tags = {
-    "DeploymentId"              = "${var.deployment_id}"
+    "DeploymentId"              = "${var.network_name}"
     "DockerImage.Quorum"        = "${local.quorum_docker_image}"
     "DockerImage.PrivacyEngine" = "${local.tx_privacy_engine_docker_image}"
   }

@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ecs_task" {
-  name = "quorum-ecs-task-${var.deployment_id}"
+  name = "quorum-ecs-task-${var.network_name}"
   path = "/ecs/"
 
   assume_role_policy = <<EOF
@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "ecs_task" {
 }
 
 resource "aws_iam_policy" "ecs_task" {
-  name        = "quorum-ecs-task-policy-${var.deployment_id}"
+  name        = "quorum-ecs-task-policy-${var.network_name}"
   path        = "/"
   description = "This policy allows task to access S3 bucket"
   policy      = "${data.aws_iam_policy_document.ecs_task.json}"

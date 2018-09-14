@@ -1,14 +1,14 @@
 locals {
-  quorum_rpc_port           = 22000
-  quorum_p2p_port           = 21000
-  raft_port                 = 50400
-  quorum_data_dir           = "${local.shared_volume_container_path}/dd"
-  quorum_password_file      = "${local.shared_volume_container_path}/passwords.txt"
-  quorum_static_nodes       = "${local.quorum_data_dir}/static-nodes.json"
-  quorum_permissioned_nodes = "${local.quorum_data_dir}/permissioned-nodes.json"
-  genenis_file              = "${local.shared_volume_container_path}/genesis.json"
-  node_id_file              = "${local.shared_volume_container_path}/node_id"
-  node_ids_folder           = "${local.shared_volume_container_path}/nodeids"
+  quorum_rpc_port                = 22000
+  quorum_p2p_port                = 21000
+  raft_port                      = 50400
+  quorum_data_dir                = "${local.shared_volume_container_path}/dd"
+  quorum_password_file           = "${local.shared_volume_container_path}/passwords.txt"
+  quorum_static_nodes_file       = "${local.quorum_data_dir}/static-nodes.json"
+  quorum_permissioned_nodes_file = "${local.quorum_data_dir}/permissioned-nodes.json"
+  genenis_file                   = "${local.shared_volume_container_path}/genesis.json"
+  node_id_file                   = "${local.shared_volume_container_path}/node_id"
+  node_ids_folder                = "${local.shared_volume_container_path}/nodeids"
 
   consensus_config_map = "${local.consensus_config[var.consensus_mechanism]}"
 
@@ -16,63 +16,15 @@ locals {
     "mkdir -p ${local.quorum_data_dir}/keystore",
     "mkdir -p ${local.quorum_data_dir}/geth",
     "echo \"\" > ${local.quorum_password_file}",
-    "echo \"Creating ${local.quorum_static_nodes} and ${local.quorum_permissioned_nodes}\"",
+    "echo \"Creating ${local.quorum_static_nodes_file} and ${local.quorum_permissioned_nodes_file}\"",
     "all=\"\"; for f in `ls ${local.node_ids_folder}`; do nodeid=$(cat ${local.node_ids_folder}/$f); ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"enode://$nodeid@$ip:${local.quorum_p2p_port}?discport=0&${join("&", local.consensus_config_map["enode_params"])}\\\"\"; done; all=$${all:1}",
-    "echo \"[$all]\" > ${local.quorum_static_nodes}",
-    "echo \"[$all]\" > ${local.quorum_permissioned_nodes}",
-    "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/" , "$1")}' > ${local.genenis_file}",
+    "echo \"[$all]\" > ${local.quorum_static_nodes_file}",
+    "echo \"[$all]\" > ${local.quorum_permissioned_nodes_file}",
+    "echo Permissioned Nodes: $(cat ${local.quorum_permissioned_nodes_file})",
+    "echo '${replace(replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/" , "$1"), "string:", "")}' > ${local.genenis_file}",
+    "cat ${local.genenis_file}",
     "geth --datadir ${local.quorum_data_dir} init ${local.genenis_file}",
   ]
-
-  quorum_config_container_definition = {
-    name      = "${local.quorum_config_container_name}"
-    image     = "${local.quorum_docker_image}"
-    essential = "false"
-
-    logConfiguration = {
-      logDriver = "awslogs"
-
-      options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
-        awslogs-region        = "${var.region}"
-        awslogs-stream-prefix = "${var.deployment_id}"
-      }
-    }
-
-    mountPoints = [
-      {
-        sourceVolume  = "${local.shared_volume_name}"
-        containerPath = "${local.shared_volume_container_path}"
-      },
-    ]
-
-    healthCheck = {
-      interval = 5
-      retries  = 10
-
-      command = [
-        "CMD-SHELL",
-        "[ -S ${local.quorum_permissioned_nodes} ];",
-      ]
-    }
-
-    volumesFrom = [
-      {
-        sourceContainer = "${local.node_key_bootstrap_container_name}"
-      },
-      {
-        sourceContainer = "${local.metadata_bootstrap_container_name}"
-      },
-    ]
-
-    entrypoint = [
-      "/bin/sh",
-      "-c",
-      "${join("\n", local.quorum_config_commands)}",
-    ]
-
-    dockerLabels = "${local.common_tags}"
-  }
 
   additional_args = "${local.consensus_config_map["geth_args"]}"
 
@@ -91,6 +43,13 @@ locals {
     "--verbosity 4",
   ]
 
+  quorum_run_commands = [
+    "set -e",
+    "echo Wait until metadata bootstrap completed ...",
+    "while [ ! -f \"${local.metadata_bootstrap_container_status_file}\" ]; do sleep 1; done",
+    "${local.quorum_config_commands}",
+  ]
+
   quorum_run_container_definition = {
     name      = "${local.quorum_run_container_name}"
     image     = "${local.quorum_docker_image}"
@@ -102,7 +61,7 @@ locals {
       options = {
         awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
         awslogs-region        = "${var.region}"
-        awslogs-stream-prefix = "${var.deployment_id}"
+        awslogs-stream-prefix = "${var.network_name}"
       }
     }
 
@@ -125,13 +84,7 @@ locals {
 
     volumesFrom = [
       {
-        sourceContainer = "${local.node_key_bootstrap_container_name}"
-      },
-      {
         sourceContainer = "${local.metadata_bootstrap_container_name}"
-      },
-      {
-        sourceContainer = "${local.quorum_config_container_name}"
       },
       {
         sourceContainer = "${local.tx_privacy_engine_run_container_name}"
@@ -145,7 +98,11 @@ locals {
       },
     ]
 
-    command = "${concat(local.geth_args, local.additional_args)}"
+    entrypoint = [
+      "/bin/sh",
+      "-c",
+      "${join("\n", local.quorum_run_commands)}",
+    ]
 
     dockerLabels = "${local.common_tags}"
   }
@@ -153,23 +110,23 @@ locals {
   genesis = {
     "alloc" = {
       "0xed9d02e382b34818e88b88a309c7fe71e65f419d" = {
-        "balance" = "1000000000000000000000000000"
+        "balance" = "string:1000000000000000000000000000"
       }
 
       "0xca843569e3427144cead5e4d5999a3d0ccf92b8e" = {
-        "balance" = "1000000000000000000000000000"
+        "balance" = "string:1000000000000000000000000000"
       }
 
       "0x0fbdc686b912d7722dc86510934589e0aaf3b55a" = {
-        "balance" = "1000000000000000000000000000"
+        "balance" = "string:1000000000000000000000000000"
       }
 
       "0x9186eb3d20cbd1f5f992a950d808c4495153abd5" = {
-        "balance" = "1000000000000000000000000000"
+        "balance" = "string:1000000000000000000000000000"
       }
 
       "0x0638e1574728b6d862dd5d3a3e0942c3be47d996" = {
-        "balance" = "1000000000000000000000000000"
+        "balance" = "string:1000000000000000000000000000"
       }
     }
 
@@ -200,6 +157,6 @@ resource "random_integer" "network_id" {
   max = 9999
 
   keepers = {
-    changes_when = "${var.deployment_id}"
+    changes_when = "${var.network_name}"
   }
 }

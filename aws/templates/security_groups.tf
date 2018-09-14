@@ -1,6 +1,6 @@
 resource "aws_security_group" "quorum" {
-  name        = "quorum-sg-${var.deployment_id}"
-  description = "Security group used in Quorum network ${var.deployment_id}"
+  name        = "quorum-sg-${var.network_name}"
+  description = "Security group used in Quorum network ${var.network_name}"
 
   egress {
     from_port   = 0
@@ -10,7 +10,7 @@ resource "aws_security_group" "quorum" {
     description = "Allow all"
   }
 
-  tags = "${merge(local.common_tags, map("Name", format("quorum-sg-%s", var.deployment_id)))}"
+  tags = "${merge(local.common_tags, map("Name", format("quorum-sg-%s", var.network_name)))}"
 }
 
 resource "aws_security_group_rule" "geth_p2p" {

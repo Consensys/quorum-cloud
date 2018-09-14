@@ -2,7 +2,7 @@ variable "region" {
   description = "Target AWS Region. This must be pre-initialized from `_terraform_init` run"
 }
 
-variable "deployment_id" {
+variable "network_name" {
   description = "Identify the Quorum network from multiple deployments. This must be pre-initialized from `_terraform_init` run"
 }
 
