@@ -1,6 +1,7 @@
 locals {
   quorum_rpc_port           = 22000
   quorum_p2p_port           = 21000
+  raft_port                 = 50400
   quorum_data_dir           = "${local.shared_volume_container_path}/dd"
   quorum_password_file      = "${local.shared_volume_container_path}/passwords.txt"
   quorum_static_nodes       = "${local.quorum_data_dir}/static-nodes.json"
@@ -9,48 +10,20 @@ locals {
   node_id_file              = "${local.shared_volume_container_path}/node_id"
   node_ids_folder           = "${local.shared_volume_container_path}/nodeids"
 
-  geth_bootstrap_commands = [
+  quorum_config_commands = [
     "mkdir -p ${local.quorum_data_dir}/keystore",
     "mkdir -p ${local.quorum_data_dir}/geth",
-    "mkdir -p ${local.node_ids_folder}",
     "echo \"\" > ${local.quorum_password_file}",
-    "bootnode -genkey ${local.quorum_data_dir}/geth/nodekey",
-    "export TASK_REVISION=$(cat ${local.task_revision_file})",
-    "export HOST_IP=$(cat ${local.host_ip_file})",
-    "export NODE_ID=$(bootnode -nodekey ${local.quorum_data_dir}/geth/nodekey -writeaddress)",
-    "echo $NODE_ID > ${local.node_id_file}",
-    "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
-    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/nodeids ${local.node_ids_folder}; count=$(ls ${local.node_ids_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their IDs ... $count/${var.number_of_nodes}\"; sleep 3; done",
-    "echo \"All nodes have registered their IDs\"",
     "echo \"Creating ${local.quorum_static_nodes} and ${local.quorum_permissioned_nodes}\"",
-    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do nodeid=$(cat ${local.node_ids_folder}/$f); ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"enode://$nodeid@$ip:${local.quorum_p2p_port}?discport=0${data.null_data_source.concensus_mechanism_enode_args.inputs[var.concensus_mechanism]}\\\"\"; done; all=$${all:1}",
+    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do nodeid=$(cat ${local.node_ids_folder}/$f); ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"enode://$nodeid@$ip:${local.quorum_p2p_port}?discport=0&${join("&", local.consensus_config[var.consensus_mechanism].enode_params)}\\\"\"; done; all=$${all:1}",
     "echo \"[$all]\" > ${local.quorum_static_nodes}",
     "echo \"[$all]\" > ${local.quorum_permissioned_nodes}",
     "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/" , "$1")}' > ${local.genenis_file}",
     "geth --datadir ${local.quorum_data_dir} init ${local.genenis_file}",
   ]
 
-  raft_port = 50400
-
-  additional_args = "${split(data.null_data_source.concensus_mechanism_geth_args.inputs[var.concensus_mechanism], ",")}"
-
-  geth_args = [
-    "--datadir ${local.quorum_data_dir}",
-    "--permissioned",
-    "--rpc",
-    "--rpcaddr 0.0.0.0",
-    "--rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,${var.concensus_mechanism}",
-    "--rpcport ${local.quorum_rpc_port}",
-    "--port ${local.quorum_p2p_port}",
-    "--unlock 0",
-    "--password ${local.quorum_password_file}",
-    "--nodiscover",
-    "--networkid ${random_integer.network_id.result}",
-    "--verbosity 4",
-  ]
-
-  quorum_bootstrap_container_definition = {
-    name      = "geth-bootstrap"
+  quorum_config_container_definition = {
+    name      = "${local.quorum_config_container_name}"
     image     = "${local.quorum_docker_image}"
     essential = "false"
 
@@ -77,27 +50,47 @@ locals {
 
       command = [
         "CMD-SHELL",
-        "[ -S ${local.shared_volume_container_path}/tm.pub ];",
+        "[ -S ${local.quorum_permissioned_nodes} ];",
       ]
     }
 
     volumesFrom = [
       {
-        sourceContainer = "config-bootstrap"
+        sourceContainer = "${local.node_key_bootstrap_container_name}"
+      },
+      {
+        sourceContainer = "${local.metadata_bootstrap_container_name}"
       },
     ]
 
     entrypoint = [
       "/bin/sh",
       "-c",
-      "${join("\n", local.geth_bootstrap_commands)}",
+      "${join("\n", local.quorum_config_commands)}",
     ]
 
     dockerLabels = "${local.common_tags}"
   }
 
-  quorum_container_definition = {
-    name      = "geth-run"
+  additional_args = "${lookup(local.consensus_config[var.consensus_mechanism], "geth_args")}"
+
+  geth_args = [
+    "--datadir ${local.quorum_data_dir}",
+    "--permissioned",
+    "--rpc",
+    "--rpcaddr 0.0.0.0",
+    "--rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,${var.consensus_mechanism}",
+    "--rpcport ${local.quorum_rpc_port}",
+    "--port ${local.quorum_p2p_port}",
+    "--unlock 0",
+    "--password ${local.quorum_password_file}",
+    "--nodiscover",
+    "--networkid ${random_integer.network_id.result}",
+    "--verbosity 4",
+  ]
+
+  quorum_run_container_definition = {
+    name      = "${local.quorum_run_container_name}"
     image     = "${local.quorum_docker_image}"
     essential = "true"
 
@@ -124,22 +117,22 @@ locals {
 
       command = [
         "CMD-SHELL",
-        "[ -S ${local.shared_volume_container_path}/tm.pub ];",
+        "[ -S ${local.quorum_data_dir}/geth.ipc ];",
       ]
     }
 
     volumesFrom = [
       {
-        sourceContainer = "${var.tx_privacy_engine}-bootstrap"
+        sourceContainer = "${local.node_key_bootstrap_container_name}"
       },
       {
-        sourceContainer = "config-bootstrap"
+        sourceContainer = "${local.metadata_bootstrap_container_name}"
       },
       {
-        sourceContainer = "${var.tx_privacy_engine}-run"
+        sourceContainer = "${local.quorum_config_container_name}"
       },
       {
-        sourceContainer = "geth-bootstrap"
+        sourceContainer = "${local.tx_privacy_engine_run_container_name}"
       },
     ]
 
@@ -182,7 +175,7 @@ locals {
 
     "config" = {
       "byzantiumBlock" = 1
-      "chainId"        = 10
+      "chainId"        = "${random_integer.network_id.result}"
       "eip150Block"    = 1
       "eip155Block"    = 0
       "eip150Hash"     = "0x0000000000000000000000000000000000000000000000000000000000000000"
@@ -206,19 +199,5 @@ resource "random_integer" "network_id" {
 
   keepers = {
     changes_when = "${var.deployment_id}"
-  }
-}
-
-data "null_data_source" "concensus_mechanism_geth_args" {
-  inputs {
-    raft     = "--raft,--raftport ${local.raft_port}"
-    istanbul = "--istanbul.blockperiod 1,--emitcheckpoints"
-  }
-}
-
-data "null_data_source" "concensus_mechanism_enode_args" {
-  inputs {
-    raft     = "&raftport=${local.raft_port}"
-    istanbul = ""
   }
 }

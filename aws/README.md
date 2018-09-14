@@ -3,31 +3,32 @@
 TBD
 
 ### ECS Containers
-```
-           geth-key-gen
+
+* ECS Services: number of services is equal to number of nodes in the network
+* ECS Task: defines the following containers
+  ```
+        node-key-bootstrap
                 ^
                 |
-         config-bootstrap
+        metadata-bootstrap
                 ^
               /   \
              /     \
- geth-bootstrap   privacy-engine-bootstrap
+  quorum-config   {tx-privacy-engine}-config
         ^                   ^
         |                   |
-        |            privacy-engine-run
+        |            {tx-privacy-engine}-run
         |                   ^
         |                   |
-        |-------------- geth-run  
+        |-------------- quorum-run  
              
-```
-
-
-* `geth-key-gen`: run `bootnode` to create a node key, store it in shared folder
-* `config-bootstrap`: prepare IP list and enode list
-* `geth-bootstrap`: run `geth init`
-* `privacy-engine-bootstrap`: prepare config for the engine (Constallation/Tessera config)
-* `privacy-engine-run`: run Constellation/Tessera
-* `geth-run`: run `geth`
+  ```
+  * `node-key-bootstrap`: run `bootnode` to generate a node key and marshall to node id, store them in shared folder
+  * `metadata-bootstrap`: prepare IP list and enode list
+  * `quorum-config`: run `geth init`
+  * `{tx-privacy-engine}-bootstrap`: prepare config for the engine (Constallation/Tessera)
+  * `{tx-privacy-engine}-run`: run Constellation/Tessera
+  * `quorum-run`: run `geth`
 
 ## Getting Started
 

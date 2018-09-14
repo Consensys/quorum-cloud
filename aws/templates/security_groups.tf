@@ -45,7 +45,7 @@ resource "aws_security_group_rule" "constellation" {
 }
 
 resource "aws_security_group_rule" "raft" {
-  count             = "${var.concensus_mechanism == "raft" ? 1 : 0}"
+  count             = "${var.consensus_mechanism == "raft" ? 1 : 0}"
   from_port         = "${local.raft_port}"
   protocol          = "tcp"
   security_group_id = "${aws_security_group.quorum.id}"

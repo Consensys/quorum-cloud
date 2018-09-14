@@ -60,7 +60,7 @@ variable "aws_cli_docker_image_tag" {
   default     = "latest"
 }
 
-variable "concensus_mechanism" {
+variable "consensus_mechanism" {
   description = "Concensus mechanism used in the network. Supported values are raft/istanbul"
   default     = "raft"
 }

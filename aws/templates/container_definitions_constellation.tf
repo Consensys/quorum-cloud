@@ -20,9 +20,8 @@ locals {
   ]
 
   constellation_container_definitions = [
-    "${local.config_bootstrap_container_definition}",
     {
-      name      = "${var.tx_privacy_engine}-bootstrap"
+      name      = "${local.tx_privacy_engine_bootstrap_container_name}"
       image     = "${local.tx_privacy_engine_docker_image}"
       essential = "false"
 
@@ -55,7 +54,10 @@ locals {
 
       volumesFrom = [
         {
-          sourceContainer = "config-bootstrap"
+          sourceContainer = "${local.metadata_bootstrap_container_name}"
+        },
+        {
+          sourceContainer = "${local.node_key_bootstrap_container_name}"
         },
       ]
 
@@ -68,7 +70,7 @@ locals {
       dockerLabels = "${local.common_tags}"
     },
     {
-      name      = "${var.tx_privacy_engine}-run"
+      name      = "${local.tx_privacy_engine_run_container_name}"
       image     = "${local.tx_privacy_engine_docker_image}"
       essential = "true"
 
@@ -97,10 +99,13 @@ locals {
 
       volumesFrom = [
         {
-          sourceContainer = "${var.tx_privacy_engine}-bootstrap"
+          sourceContainer = "${local.node_key_bootstrap_container_name}"
         },
         {
-          sourceContainer = "config-bootstrap"
+          sourceContainer = "${local.metadata_bootstrap_container_name}"
+        },
+        {
+          sourceContainer = "${local.tx_privacy_engine_bootstrap_container_name}"
         },
       ]
 
@@ -120,8 +125,5 @@ locals {
 
       dockerLabels = "${local.common_tags}"
     },
-    "${local.quorum_bootstrap_container_definition}",
   ]
-
-  // "${local.quorum_container_definition}",
 }
