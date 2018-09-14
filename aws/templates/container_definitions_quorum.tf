@@ -10,12 +10,14 @@ locals {
   node_id_file              = "${local.shared_volume_container_path}/node_id"
   node_ids_folder           = "${local.shared_volume_container_path}/nodeids"
 
+  consensus_config_map = "${local.consensus_config[var.consensus_mechanism]}"
+
   quorum_config_commands = [
     "mkdir -p ${local.quorum_data_dir}/keystore",
     "mkdir -p ${local.quorum_data_dir}/geth",
     "echo \"\" > ${local.quorum_password_file}",
     "echo \"Creating ${local.quorum_static_nodes} and ${local.quorum_permissioned_nodes}\"",
-    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do nodeid=$(cat ${local.node_ids_folder}/$f); ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"enode://$nodeid@$ip:${local.quorum_p2p_port}?discport=0&${join("&", local.consensus_config[var.consensus_mechanism].enode_params)}\\\"\"; done; all=$${all:1}",
+    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do nodeid=$(cat ${local.node_ids_folder}/$f); ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"enode://$nodeid@$ip:${local.quorum_p2p_port}?discport=0&${join("&", local.consensus_config_map["enode_params"])}\\\"\"; done; all=$${all:1}",
     "echo \"[$all]\" > ${local.quorum_static_nodes}",
     "echo \"[$all]\" > ${local.quorum_permissioned_nodes}",
     "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/" , "$1")}' > ${local.genenis_file}",
@@ -72,7 +74,7 @@ locals {
     dockerLabels = "${local.common_tags}"
   }
 
-  additional_args = "${lookup(local.consensus_config[var.consensus_mechanism], "geth_args")}"
+  additional_args = "${local.consensus_config_map["geth_args"]}"
 
   geth_args = [
     "--datadir ${local.quorum_data_dir}",
