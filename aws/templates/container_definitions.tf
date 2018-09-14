@@ -32,14 +32,16 @@ locals {
     }
   }
 
-  common_container_definitions = [
-    "${local.node_key_bootstrap_container_name}",
+  container_definitions_for_constellation = [
+    "${local.node_key_bootstrap_container_definition}",
     "${local.metadata_bootstrap_container_definition}",
     "${local.quorum_config_container_definition}",
     "${local.quorum_run_container_definition}",
+    "${local.constellation_config_container_definition}",
+    "${local.constellation_run_container_definition}",
   ]
 
   container_definitions = [
-    "${var.tx_privacy_engine == "constellation" ? jsonencode(concat(local.common_container_definitions, local.constellation_container_definitions)) : ""}",
+    "${var.tx_privacy_engine == "constellation" ? jsonencode(local.container_definitions_for_constellation) : ""}",
   ]
 }
