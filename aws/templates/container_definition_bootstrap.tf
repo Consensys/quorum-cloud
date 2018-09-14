@@ -96,7 +96,7 @@ locals {
     "echo \"All nodes have registered accounts\"",
     "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done",
     "alloc=\"{$${alloc:1}}\"",
-    "echo '${replace(jsonencode(local.genesis), "/(true|false|[0-9]+)/", "$1")}' | jq \". + { alloc : $alloc}\" > ${local.genenis_file}",
+    "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/", "$1")}' | jq \". + { alloc : $alloc}\" > ${local.genenis_file}",
     "cat ${local.genenis_file}",
 
     // Gather all Node IDs
