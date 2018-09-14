@@ -6,7 +6,7 @@ locals {
     "constellation-node --generatekeys=${local.shared_volume_container_path}/tm",
     "export HOST_IP=$(cat ${local.host_ip_file})",
     "echo Host IP: $HOST_IP",
-    "all=\"\"; for f in `ls ${local.hosts_folder}`; do ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"http://$ip:${local.constellation_port}/\\\"\"; done",
+    "all=\"\"; for f in `ls ${local.hosts_folder} | grep -v ${local.normalized_host_ip}`; do ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"http://$ip:${local.constellation_port}/\\\"\"; done",
     "echo \"Creating ${local.constellation_config_file}\"",
     "echo \"# This file is auto generated. Please do not edit\" > ${local.constellation_config_file}",
     "echo \"url = \\\"http://$HOST_IP:${local.constellation_port}/\\\"\" >> ${local.constellation_config_file}",

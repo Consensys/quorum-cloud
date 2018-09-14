@@ -9,11 +9,11 @@ locals {
   genenis_file                   = "${local.shared_volume_container_path}/genesis.json"
   node_id_file                   = "${local.shared_volume_container_path}/node_id"
   node_ids_folder                = "${local.shared_volume_container_path}/nodeids"
+  accounts_folder                = "${local.shared_volume_container_path}/accounts"
 
   consensus_config_map = "${local.consensus_config[var.consensus_mechanism]}"
 
   quorum_config_commands = [
-    "mkdir -p ${local.quorum_data_dir}/keystore",
     "mkdir -p ${local.quorum_data_dir}/geth",
     "echo \"\" > ${local.quorum_password_file}",
     "echo \"Creating ${local.quorum_static_nodes_file} and ${local.quorum_permissioned_nodes_file}\"",
@@ -21,8 +21,6 @@ locals {
     "echo \"[$all]\" > ${local.quorum_static_nodes_file}",
     "echo \"[$all]\" > ${local.quorum_permissioned_nodes_file}",
     "echo Permissioned Nodes: $(cat ${local.quorum_permissioned_nodes_file})",
-    "echo '${replace(replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/" , "$1"), "string:", "")}' > ${local.genenis_file}",
-    "cat ${local.genenis_file}",
     "geth --datadir ${local.quorum_data_dir} init ${local.genenis_file}",
   ]
 
@@ -50,7 +48,6 @@ locals {
     "echo Wait until ${var.tx_privacy_engine} is ready ...",
     "while [ ! -S \"${local.tx_privacy_engine_socket_file}\" ]; do sleep 1; done",
     "${local.quorum_config_commands}",
-
     "geth ${join(" ", concat(local.geth_args, local.additional_args))}",
   ]
 
@@ -112,27 +109,7 @@ locals {
   }
 
   genesis = {
-    "alloc" = {
-      "0xed9d02e382b34818e88b88a309c7fe71e65f419d" = {
-        "balance" = "string:1000000000000000000000000000"
-      }
-
-      "0xca843569e3427144cead5e4d5999a3d0ccf92b8e" = {
-        "balance" = "string:1000000000000000000000000000"
-      }
-
-      "0x0fbdc686b912d7722dc86510934589e0aaf3b55a" = {
-        "balance" = "string:1000000000000000000000000000"
-      }
-
-      "0x9186eb3d20cbd1f5f992a950d808c4495153abd5" = {
-        "balance" = "string:1000000000000000000000000000"
-      }
-
-      "0x0638e1574728b6d862dd5d3a3e0942c3be47d996" = {
-        "balance" = "string:1000000000000000000000000000"
-      }
-    }
+    "alloc" = {}
 
     "coinbase" = "0x0000000000000000000000000000000000000000"
 

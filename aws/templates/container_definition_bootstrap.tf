@@ -1,7 +1,8 @@
 locals {
-  host_ip_file       = "${local.shared_volume_container_path}/host_ip"
-  task_revision_file = "${local.shared_volume_container_path}/task_revision"
-  hosts_folder       = "${local.shared_volume_container_path}/hosts"
+  host_ip_file         = "${local.shared_volume_container_path}/host_ip"
+  task_revision_file   = "${local.shared_volume_container_path}/task_revision"
+  account_address_file = "${local.shared_volume_container_path}/first_account_address"
+  hosts_folder         = "${local.shared_volume_container_path}/hosts"
 
   metadata_bootstrap_container_status_file = "${local.shared_volume_container_path}/metadata_bootstrap_container_status"
 
@@ -14,7 +15,13 @@ locals {
     "echo \"\" > ${local.quorum_password_file}",
     "bootnode -genkey ${local.quorum_data_dir}/geth/nodekey",
     "export NODE_ID=$(bootnode -nodekey ${local.quorum_data_dir}/geth/nodekey -writeaddress)",
-    "echo Write Node Id [$NODE_ID] to ${local.node_id_file}",
+    "echo Creating an account for this node",
+    "geth --datadir ${local.quorum_data_dir} account new --password ${local.quorum_password_file}",
+    "export KEYSTORE_FILE=$(ls ${local.quorum_data_dir}/keystore/ | head -n1)",
+    "export ACCOUNT_ADDRESS=$(cat ${local.quorum_data_dir}/keystore/$KEYSTORE_FILE | sed 's/^.*\"address\":\"\\([^\"]*\\)\".*$/\\1/g')",
+    "echo Writing account address $ACCOUNT_ADDRESS to ${local.account_address_file}",
+    "echo $ACCOUNT_ADDRESS > ${local.account_address_file}",
+    "echo Writing Node Id [$NODE_ID] to ${local.node_id_file}",
     "echo $NODE_ID > ${local.node_id_file}",
   ]
 
@@ -73,13 +80,24 @@ locals {
     "echo $HOST_IP > ${local.host_ip_file}",
     "mkdir -p ${local.hosts_folder}",
     "mkdir -p ${local.node_ids_folder}",
+    "mkdir -p ${local.accounts_folder}",
     "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
     "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
+    "aws s3 cp ${local.account_address_file} s3://${local.s3_revision_folder}/accounts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
 
     // Gather all IPs
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/hosts ${local.hosts_folder}; count=$(ls ${local.hosts_folder} | grep ^ip | wc -l); echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 1; done",
 
     "echo \"All containers have reported their IPs\"",
+
+    // Gather all Accounts to create genenis.json
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/accounts ${local.accounts_folder}; count=$(ls ${local.accounts_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their accounts ... $count/${var.number_of_nodes}\"; sleep 1; done",
+
+    "echo \"All nodes have registered accounts\"",
+    "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done",
+    "alloc=\"{$${alloc:1}}\"",
+    "echo '${replace(jsonencode(local.genesis), "/(true|false|[0-9]+)/", "$1")}' | jq \". + { alloc : $alloc}\" > ${local.genenis_file}",
+    "cat ${local.genenis_file}",
 
     // Gather all Node IDs
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/nodeids ${local.node_ids_folder}; count=$(ls ${local.node_ids_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their IDs ... $count/${var.number_of_nodes}\"; sleep 1; done",
