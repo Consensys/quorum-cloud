@@ -46,7 +46,7 @@ locals {
 
       command = [
         "CMD-SHELL",
-        "[ -S ${local.node_id_file} ];",
+        "[ -f ${local.node_id_file} ];",
       ]
     }
 
@@ -71,19 +71,19 @@ locals {
     "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"${local.metadata_bootstrap_container_name}\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )",
     "echo \"Host IP: $HOST_IP\"",
     "echo $HOST_IP > ${local.host_ip_file}",
+    "mkdir -p ${local.hosts_folder}",
+    "mkdir -p ${local.node_ids_folder}",
+    "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
+    "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
 
     // Gather all IPs
-    "mkdir -p ${local.hosts_folder}",
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/hosts ${local.hosts_folder}; count=$(ls ${local.hosts_folder} | grep ^ip | wc -l); echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 1; done",
 
-    "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
-    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/hosts ${local.hosts_folder}; count=$(ls ${local.hosts_folder} | grep ^ip | wc -l); echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 3; done",
     "echo \"All containers have reported their IPs\"",
 
     // Gather all Node IDs
-    "mkdir -p ${local.node_ids_folder}",
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/nodeids ${local.node_ids_folder}; count=$(ls ${local.node_ids_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their IDs ... $count/${var.number_of_nodes}\"; sleep 1; done",
 
-    "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
-    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/nodeids ${local.node_ids_folder}; count=$(ls ${local.node_ids_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their IDs ... $count/${var.number_of_nodes}\"; sleep 3; done",
     "echo \"All nodes have registered their IDs\"",
     "echo \"Done!\" > ${local.metadata_bootstrap_container_status_file}",
   ]
@@ -122,7 +122,7 @@ locals {
 
       command = [
         "CMD-SHELL",
-        "[ -S ${local.metadata_bootstrap_container_status_file} ];",
+        "[ -f ${local.metadata_bootstrap_container_status_file} ];",
       ]
     }
 

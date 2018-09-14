@@ -47,7 +47,11 @@ locals {
     "set -e",
     "echo Wait until metadata bootstrap completed ...",
     "while [ ! -f \"${local.metadata_bootstrap_container_status_file}\" ]; do sleep 1; done",
+    "echo Wait until ${var.tx_privacy_engine} is ready ...",
+    "while [ ! -S \"${local.tx_privacy_engine_socket_file}\" ]; do sleep 1; done",
     "${local.quorum_config_commands}",
+
+    "geth ${join(" ", concat(local.geth_args, local.additional_args))}",
   ]
 
   quorum_run_container_definition = {

@@ -30,11 +30,14 @@ locals {
     }
   }
 
-  container_definitions_for_constellation = [
+  common_container_definitions = [
     "${local.node_key_bootstrap_container_definition}",
     "${local.metadata_bootstrap_container_definition}",
+    "${local.quorum_run_container_definition}",
+  ]
 
-    //"${local.quorum_run_container_definition}",
+  container_definitions_for_constellation = [
+    "${local.common_container_definitions}",
     "${local.constellation_run_container_definition}",
   ]
 

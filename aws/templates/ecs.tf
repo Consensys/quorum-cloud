@@ -7,7 +7,7 @@ resource "aws_ecs_cluster" "quorum" {
 }
 
 resource "aws_ecs_task_definition" "quorum" {
-  family                   = "quorum-${var.tx_privacy_engine}-${var.network_name}"
+  family                   = "quorum-${var.consensus_mechanism}-${var.tx_privacy_engine}-${var.network_name}"
   container_definitions    = "${replace(element(compact(local.container_definitions), 0), "/\"(true|false|[0-9]+)\"/", "$1")}"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "4096"
