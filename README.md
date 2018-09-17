@@ -1,2 +1,3 @@
-# quorum-cloud
-Deploy Quorum network in multiple cloud providers
+Using [Terraform](https://terraform.io) to bootstrap Quorum network in the cloud
+
+* [AWS](aws/README.md)
