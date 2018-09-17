@@ -41,7 +41,8 @@ These above resources are exposed to CloudFormation Exports which will be used i
 
 ### Step 2: `_terraform_init`
 
-This is to generate the backend configuration for `terraform init` by reading various CloudFormation Exports (from the above) and writing to a file.
+This is to generate the backend configuration for `terraform init` by reading various CloudFormation Exports (from the above) 
+and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars`) that are used for Step 3
 
 ```
 terraform init
@@ -52,9 +53,11 @@ terraform apply -auto-approve
 
 ```
 terraform init -backend-config=terraform.auto.backend-config
-terraform plan -out quorum.tfplan
+terraform plan -out quorum.tfplan -var network_name=dev
 terraform apply quorum.tfplan
 ```
+
+If `network_name` is not provided, a random name will be generated.
 
 ## Logging
 

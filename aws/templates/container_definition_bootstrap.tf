@@ -47,9 +47,16 @@ locals {
       },
     ]
 
+    environments = []
+
+    portMappings = []
+
+    volumesFrom = []
+
     healthCheck = {
       interval = 5
       retries  = 10
+      timeout  = 5
 
       command = [
         "CMD-SHELL",
@@ -64,6 +71,8 @@ locals {
     ]
 
     dockerLabels = "${local.common_tags}"
+
+    cpu = 0
   }
 
   metadata_bootstrap_commands = [
@@ -128,6 +137,10 @@ locals {
       },
     ]
 
+    environments = []
+
+    portMappings = []
+
     volumesFrom = [
       {
         sourceContainer = "${local.node_key_bootstrap_container_name}"
@@ -137,6 +150,7 @@ locals {
     healthCheck = {
       interval = 5
       retries  = 10
+      timeout  = 5
 
       command = [
         "CMD-SHELL",
@@ -151,5 +165,7 @@ locals {
     ]
 
     dockerLabels = "${local.common_tags}"
+
+    cpu = 0
   }
 }

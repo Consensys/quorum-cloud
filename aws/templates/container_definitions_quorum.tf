@@ -76,12 +76,17 @@ locals {
     healthCheck = {
       interval = 5
       retries  = 10
+      timeout  = 5
 
       command = [
         "CMD-SHELL",
         "[ -S ${local.quorum_data_dir}/geth.ipc ];",
       ]
     }
+
+    environments = []
+
+    portMappings = []
 
     volumesFrom = [
       {
@@ -106,6 +111,8 @@ locals {
     ]
 
     dockerLabels = "${local.common_tags}"
+
+    cpu = 0
   }
 
   genesis = {
