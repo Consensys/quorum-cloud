@@ -3,7 +3,8 @@ locals {
   constellation_port        = 10000
 
   constellation_config_commands = [
-    "constellation-node --generatekeys=${local.shared_volume_container_path}/tm",
+    "constellation-node --generatekeys=${local.shared_volume_container_path}/tm < /dev/null",
+    "echo \nPublicKey: $(cat ${local.shared_volume_container_path}/tm.pub)",
     "export HOST_IP=$(cat ${local.host_ip_file})",
     "echo Host IP: $HOST_IP",
     "all=\"\"; for f in `ls ${local.hosts_folder} | grep -v ${local.normalized_host_ip}`; do ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"http://$ip:${local.constellation_port}/\\\"\"; done",
