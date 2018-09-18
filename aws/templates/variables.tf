@@ -71,7 +71,7 @@ variable "consensus_mechanism" {
 
 variable "tx_privacy_engine" {
   description = "Engine that implements transaction privacy. Supported values are constellation/tessera"
-  default     = "constellation"
+  default     = "tessera"
 }
 
 variable "quorum_bucket" {

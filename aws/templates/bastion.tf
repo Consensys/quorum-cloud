@@ -1,11 +1,5 @@
 locals {
   default_bastion_resource_name = "${format("quorum-bastion-%s", var.network_name)}"
-
-  geth_attach_script = <<EOF
-#!/bin/bash
-
-sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
-EOF
 }
 
 data "aws_ami" "this" {
@@ -92,7 +86,11 @@ do
   f=$(grep -l $${nodes[$idx]} *)
   ip=$(cat ${local.hosts_folder}/$f)
   script="/usr/local/bin/Node$((idx+1))"
-  echo '${local.geth_attach_script}' > $script
+  cat <<SS > $script
+#!/bin/bash
+
+sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
+SS
   chmod +x $script
 done
 
