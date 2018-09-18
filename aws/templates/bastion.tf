@@ -29,7 +29,7 @@ resource "aws_key_pair" "ssh" {
 }
 
 resource "local_file" "private_key" {
-  filename = "${path.module}/quorum.pem"
+  filename = "${path.module}/quorum-${var.network_name}.pem"
   content  = "${tls_private_key.ssh.private_key_pem}"
 }
 

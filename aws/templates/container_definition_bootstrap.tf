@@ -36,7 +36,7 @@ locals {
       options = {
         awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
         awslogs-region        = "${var.region}"
-        awslogs-stream-prefix = "${var.network_name}"
+        awslogs-stream-prefix = "logs"
       }
     }
 
@@ -126,7 +126,7 @@ locals {
       options = {
         awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
         awslogs-region        = "${var.region}"
-        awslogs-stream-prefix = "${var.network_name}"
+        awslogs-stream-prefix = "logs"
       }
     }
 

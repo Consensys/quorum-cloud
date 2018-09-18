@@ -42,7 +42,7 @@ These above resources are exposed to CloudFormation Exports which will be used i
 ### Step 2: `_terraform_init`
 
 This is to generate the backend configuration for `terraform init` by reading various CloudFormation Exports (from the above) 
-and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars`) that are used for Step 3
+and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars`) that are used in **Step 3**
 
 ```
 terraform init
@@ -59,9 +59,12 @@ terraform plan -out quorum.tfplan
 terraform apply quorum.tfplan
 ```
 
+During the `terraform init`, you may be asked if you want to copy existing state to the new backend, enter 'no'. 
+This happens when you switch between Quorum deployments.
+
 After provisioning is finished, public DNS and IP of the bastion host will be output along with path to the SSH Private Key.
 Bastion Host is pre-configured with Docker and Quorum Docker Image which can be used to perform `geth attach`.
-To ssh to Bastion Host: run `ssh -i quorum.pem ec2-user@<bastion DNS/IP>`. 
+To ssh to Bastion Host: run `ssh -i quorum.pem ec2-user@<Bastion DNS/IP>`. 
 
 If you wish to run `geth attach`, tunelling via SSH, to Node1:  run `ssh -t -i quorum.pem ec2-user@<bastion DNS/IP> Node1`
 

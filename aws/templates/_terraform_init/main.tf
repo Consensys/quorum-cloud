@@ -47,7 +47,7 @@ resource "local_file" "tfvars" {
 # This file is auto generated. Please do not edit
 # This file contains the default values for required variables
 region="${var.region}"
-deployment_id="${local.deployment_id}"
+network_name="${local.deployment_id}"
 quorum_bucket="${data.aws_cloudformation_export.state_bucket_name.value}"
 quorum_bucket_kms_key_arn="${data.aws_kms_alias.state_bucket.target_key_arn}"
 EOF
