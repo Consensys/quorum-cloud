@@ -11,6 +11,10 @@ variable "number_of_nodes" {
   default     = "7"
 }
 
+variable "bastion_public_subnet_id" {
+  description = "Public Subnet for Bastion node"
+}
+
 variable "subnet_ids" {
   type        = "list"
   description = "List of subnet ids used by ECS to create instances. These subnets must be routable to the internet, via Internet Gateway or NAT instance"

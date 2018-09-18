@@ -54,3 +54,26 @@ resource "aws_security_group_rule" "raft" {
   self              = "true"
   description       = "Raft HTTP traffic"
 }
+
+resource "aws_security_group" "bastion" {
+  name        = "quorum-bastion-${var.network_name}"
+  description = "Security group used by Bastion node to access Quorum network ${var.network_name}"
+
+  ingress {
+    from_port = 22
+    protocol = "tcp"
+    to_port = 22
+    cidr_blocks = ["73.150.1.0/24"]
+    description = "Allow SSH"
+  }
+
+  egress {
+    from_port   = 0
+    protocol    = "-1"
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all"
+  }
+
+  tags = "${merge(local.common_tags, map("Name", format("quorum-bastion-%s", var.network_name)))}"
+}

@@ -20,3 +20,4 @@ target/
 **/terraform.auto.*
 **/*.tfplan
 **/*.tfvars
+**/quorum.pem
