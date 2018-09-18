@@ -47,6 +47,7 @@ resource "aws_s3_bucket_object" "quorum" {
   tags           = "${local.common_tags}"
 }
 
+/*
 resource "aws_s3_bucket_object" "revision" {
   bucket     = "${var.quorum_bucket}"
   kms_key_id = "${var.quorum_bucket_kms_key_arn}"
@@ -56,3 +57,5 @@ resource "aws_s3_bucket_object" "revision" {
   content_base64 = "Cg=="
   tags           = "${local.common_tags}"
 }
+*/
+

@@ -1,5 +1,11 @@
 locals {
   default_bastion_resource_name = "${format("quorum-bastion-%s", var.network_name)}"
+
+  geth_attach_script = <<EOF
+#!/bin/bash
+
+sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
+EOF
 }
 
 data "aws_ami" "this" {
@@ -72,7 +78,11 @@ do
   task_metadata=$(aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $t)
   HOST_IP=$(echo $task_metadata | jq -r '.tasks[0] | .containers[] | select(.name == "${local.quorum_run_container_name}") | .networkInterfaces[] | .privateIpv4Address')
   group=$(echo $task_metadata | jq -r '.tasks[0] | .group')
-  echo $group > ${local.shared_volume_container_path}/mappings/${local.normalized_host_ip}
+  taskArn=$(echo $task_metadata | jq -r '.tasks[0] | .taskDefinitionArn')
+  # only care about new task
+  if [[ "$taskArn" == *:$TASK_REVISION ]]; then
+    echo $group > ${local.shared_volume_container_path}/mappings/${local.normalized_host_ip}
+  fi
 done
 
 nodes=(${join(" ", aws_ecs_service.quorum.*.name)})
@@ -82,7 +92,7 @@ do
   f=$(grep -l $${nodes[$idx]} *)
   ip=$(cat ${local.hosts_folder}/$f)
   script="/usr/local/bin/Node$((idx+1))"
-  echo "sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port}" > $script
+  echo '${local.geth_attach_script}' > $script
   chmod +x $script
 done
 

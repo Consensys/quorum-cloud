@@ -110,9 +110,10 @@ locals {
     ]
 
     healthCheck = {
-      interval = 5
-      retries  = 10
-      timeout  = 5
+      interval    = 30
+      retries     = 10
+      timeout     = 60
+      startPeriod = 300
 
       command = [
         "CMD-SHELL",
