@@ -41,7 +41,13 @@ locals {
     "${local.constellation_run_container_definition}",
   ]
 
+  container_definitions_for_tessera = [
+    "${local.common_container_definitions}",
+    "${local.tessera_run_container_definition}",
+  ]
+
   container_definitions = [
     "${var.tx_privacy_engine == "constellation" ? jsonencode(local.container_definitions_for_constellation) : ""}",
+    "${var.tx_privacy_engine == "tessera" ? jsonencode(local.container_definitions_for_tessera) : ""}",
   ]
 }

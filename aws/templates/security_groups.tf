@@ -41,7 +41,18 @@ resource "aws_security_group_rule" "constellation" {
   to_port           = "${local.constellation_port}"
   type              = "ingress"
   self              = "true"
-  description       = "Constellation Public API traffic"
+  description       = "Constellation API traffic"
+}
+
+resource "aws_security_group_rule" "tessera" {
+  count             = "${var.tx_privacy_engine == "tessera" ? 1 : 0}"
+  from_port         = "${local.tessera_port}"
+  protocol          = "tcp"
+  security_group_id = "${aws_security_group.quorum.id}"
+  to_port           = "${local.tessera_port}"
+  type              = "ingress"
+  self              = "true"
+  description       = "Tessera API traffic"
 }
 
 resource "aws_security_group_rule" "raft" {

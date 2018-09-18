@@ -55,7 +55,7 @@ systemctl start docker
 docker pull ${local.quorum_docker_image}
 
 export AWS_DEFAULT_REGION=${var.region}
-export TASK_REVISION=$(aws ecs describe-task-definition --task-definition ${aws_ecs_task_definition.quorum.family} | jq -r .taskDefinition.revision)
+export TASK_REVISION=${aws_ecs_task_definition.quorum.revision}
 mkdir -p /qdata/mappings
 aws s3 cp --recursive s3://${local.s3_revision_folder}/ /qdata/
 
