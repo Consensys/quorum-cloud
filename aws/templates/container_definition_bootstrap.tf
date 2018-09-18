@@ -26,23 +26,23 @@ locals {
   ]
 
   node_key_bootstrap_container_definition = {
-    name      = "${local.node_key_bootstrap_container_name}"
-    image     = "${local.quorum_docker_image}"
+    name = "${local.node_key_bootstrap_container_name}"
+    image = "${local.quorum_docker_image}"
     essential = "false"
 
     logConfiguration = {
       logDriver = "awslogs"
 
       options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
-        awslogs-region        = "${var.region}"
+        awslogs-group = "${aws_cloudwatch_log_group.quorum.name}"
+        awslogs-region = "${var.region}"
         awslogs-stream-prefix = "logs"
       }
     }
 
     mountPoints = [
       {
-        sourceVolume  = "${local.shared_volume_name}"
+        sourceVolume = "${local.shared_volume_name}"
         containerPath = "${local.shared_volume_container_path}"
       },
     ]
@@ -54,9 +54,9 @@ locals {
     volumesFrom = []
 
     healthCheck = {
-      interval    = 30
-      retries     = 10
-      timeout     = 60
+      interval = 30
+      retries = 10
+      timeout = 60
       startPeriod = 300
 
       command = [
@@ -91,9 +91,9 @@ locals {
     "mkdir -p ${local.hosts_folder}",
     "mkdir -p ${local.node_ids_folder}",
     "mkdir -p ${local.accounts_folder}",
-    "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
-    "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
-    "aws s3 cp ${local.account_address_file} s3://${local.s3_revision_folder}/accounts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${var.quorum_bucket_kms_key_arn}",
+    "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
+    "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
+    "aws s3 cp ${local.account_address_file} s3://${local.s3_revision_folder}/accounts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
 
     // Gather all IPs
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/hosts ${local.hosts_folder}; count=$(ls ${local.hosts_folder} | grep ^ip | wc -l); echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 1; done",

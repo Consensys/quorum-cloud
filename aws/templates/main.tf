@@ -32,8 +32,6 @@ locals {
   tx_privacy_engine_docker_image = "${coalesce(local.tessera_docker_image, local.constellation_docker_image)}"
   aws_cli_docker_image           = "${format("%s:%s", var.aws_cli_docker_image, var.aws_cli_docker_image_tag)}"
 
-  quorum_bucket = "${var.quorum_bucket}/${var.network_name}"
-
   common_tags = {
     "NetworkName"               = "${var.network_name}"
     "ECSClusterName"            = "${local.ecs_cluster_name}"

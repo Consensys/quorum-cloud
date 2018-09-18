@@ -30,8 +30,8 @@ data "aws_iam_policy_document" "ecs_task" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.quorum_bucket}",
-      "arn:aws:s3:::${var.quorum_bucket}/*",
+      "arn:aws:s3:::${local.quorum_bucket}",
+      "arn:aws:s3:::${local.quorum_bucket}/*",
     ]
   }
 
@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "ecs_task" {
     ]
 
     resources = [
-      "${var.quorum_bucket_kms_key_arn}",
+      "${aws_kms_key.bucket.arn}",
     ]
   }
 }
@@ -101,8 +101,8 @@ data "aws_iam_policy_document" "bastion" {
     ]
 
     resources = [
-      "arn:aws:s3:::${var.quorum_bucket}",
-      "arn:aws:s3:::${var.quorum_bucket}/*",
+      "arn:aws:s3:::${local.quorum_bucket}",
+      "arn:aws:s3:::${local.quorum_bucket}/*",
     ]
   }
 
@@ -114,7 +114,7 @@ data "aws_iam_policy_document" "bastion" {
     ]
 
     resources = [
-      "${var.quorum_bucket_kms_key_arn}",
+      "${aws_kms_key.bucket.arn}",
     ]
   }
 
