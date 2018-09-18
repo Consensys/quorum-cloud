@@ -59,6 +59,12 @@ terraform apply quorum.tfplan
 
 If `network_name` is not provided, a random name will be generated.
 
+After provisioning is finished, public DNS and IP of the bastion host will be output along with path to the SSH Private Key.
+Bastion Host is pre-configured with Docker and Quorum Docker Image which can be used to perform `geth attach`.
+To ssh to Bastion Host: run `ssh -i quorum.pem ec2-user@<bastion DNS/IP>`. 
+
+If you wish to run `geth attach`, tunelling via SSH, to Node1:  run `ssh -t -i quorum.pem ec2-user@<bastion DNS/IP> Node1`
+
 ## Logging
 
 CloudWatch Log Group `/ecs/quorum/**`
