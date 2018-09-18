@@ -1,9 +1,10 @@
 locals {
   service_name_fmt = "node-%0${min(length(format("%d", var.number_of_nodes)), length(format("%s", var.number_of_nodes))) + 1}d-%s"
+  ecs_cluster_name = "quorum-network-${var.network_name}"
 }
 
 resource "aws_ecs_cluster" "quorum" {
-  name = "quorum-network-${var.network_name}"
+  name = "${local.ecs_cluster_name}"
 }
 
 resource "aws_ecs_task_definition" "quorum" {

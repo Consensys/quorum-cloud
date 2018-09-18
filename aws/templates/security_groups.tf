@@ -61,9 +61,14 @@ resource "aws_security_group" "bastion" {
 
   ingress {
     from_port = 22
-    protocol = "tcp"
-    to_port = 22
-    cidr_blocks = ["73.150.1.0/24"]
+    protocol  = "tcp"
+    to_port   = 22
+
+    cidr_blocks = [
+      "73.150.1.0/24",    # Trung's home
+      "199.253.243.0/24", # Office wifi
+    ]
+
     description = "Allow SSH"
   }
 

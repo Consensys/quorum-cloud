@@ -44,11 +44,14 @@ resource "aws_instance" "bastion" {
   user_data = <<EOF
 #!/bin/bash
 
-sudo yum -y update
-sudo yum -y install docker
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo docker pull ${local.quorum_docker_image}
+yum -y update
+yum -y install docker
+systemctl enable docker
+systemctl start docker
+docker pull ${local.quorum_docker_image}
+
+mkdir -p /qdata
+aws s3 cp --recursive s3://${local.s3_revision_folder}/ /qdata/
 
 EOF
 

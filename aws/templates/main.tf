@@ -35,7 +35,8 @@ locals {
   quorum_bucket = "${var.quorum_bucket}/${var.network_name}"
 
   common_tags = {
-    "DeploymentId"              = "${var.network_name}"
+    "NetworkName"               = "${var.network_name}"
+    "ECSClusterName"            = "${local.ecs_cluster_name}"
     "DockerImage.Quorum"        = "${local.quorum_docker_image}"
     "DockerImage.PrivacyEngine" = "${local.tx_privacy_engine_docker_image}"
   }
