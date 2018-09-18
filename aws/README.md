@@ -46,18 +46,18 @@ and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars
 
 ```
 terraform init
-terraform apply -auto-approve
+terraform apply -var network_name=dev -auto-approve
 ```
+
+If `network_name` is not provided, a random name will be generated.
 
 ### Step 3: Provisioning Quorum
 
 ```
 terraform init -backend-config=terraform.auto.backend-config
-terraform plan -out quorum.tfplan -var network_name=dev
+terraform plan -out quorum.tfplan
 terraform apply quorum.tfplan
 ```
-
-If `network_name` is not provided, a random name will be generated.
 
 After provisioning is finished, public DNS and IP of the bastion host will be output along with path to the SSH Private Key.
 Bastion Host is pre-configured with Docker and Quorum Docker Image which can be used to perform `geth attach`.
