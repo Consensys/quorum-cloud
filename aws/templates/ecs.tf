@@ -36,3 +36,23 @@ resource "aws_ecs_service" "quorum" {
     security_groups  = ["${aws_security_group.quorum.id}"]
   }
 }
+
+# using these resources to make sure we clean up objects created by containers
+resource "aws_s3_bucket_object" "quorum" {
+  bucket     = "${var.quorum_bucket}"
+  kms_key_id = "${var.quorum_bucket_kms_key_arn}"
+
+  key            = "${var.network_name}/"
+  content_base64 = "Cg=="
+  tags           = "${local.common_tags}"
+}
+
+resource "aws_s3_bucket_object" "revision" {
+  bucket     = "${var.quorum_bucket}"
+  kms_key_id = "${var.quorum_bucket_kms_key_arn}"
+
+  # this key has to be in sync with ${local.s3_revision_folder} which can't be used here due to circular dependency
+  key            = "${var.network_name}/rev_${aws_ecs_task_definition.quorum.revision}/"
+  content_base64 = "Cg=="
+  tags           = "${local.common_tags}"
+}
