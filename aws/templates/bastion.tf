@@ -6,7 +6,7 @@ data "aws_ami" "this" {
   most_recent = true
 
   filter {
-    name = "name"
+    name   = "name"
     values = ["amzn2-ami-hvm-*"]
   }
 
@@ -41,17 +41,32 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = "true"
   key_name                    = "${aws_key_pair.ssh.key_name}"
   iam_instance_profile        = "${aws_iam_instance_profile.bastion.name}"
+
   user_data = <<EOF
 #!/bin/bash
 
+set -e
+
 yum -y update
+yum -y install jq
 yum -y install docker
 systemctl enable docker
 systemctl start docker
 docker pull ${local.quorum_docker_image}
 
-mkdir -p /qdata
+export AWS_DEFAULT_REGION=${var.region}
+export TASK_REVISION=$(aws ecs describe-task-definition --task-definition ${aws_ecs_task_definition.quorum.family} | jq -r .taskDefinition.revision)
+mkdir -p /qdata/mappings
 aws s3 cp --recursive s3://${local.s3_revision_folder}/ /qdata/
+
+
+for t in `aws ecs list-tasks --cluster ${local.ecs_cluster_name} | jq -r .taskArns[]`
+do
+  task_metadata=$(aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $t)
+  HOST_IP=$(echo $task_metadata | jq -r '.tasks[0] | .containers[] | select(.name == "${local.quorum_run_container_name}") | .networkInterfaces[] | .privateIpv4Address')
+  group=$(echo $task_metadata | jq -r '.tasks[0] | .group')
+  echo $group > /qdata/mappings/${local.normalized_host_ip}
+done
 
 EOF
 

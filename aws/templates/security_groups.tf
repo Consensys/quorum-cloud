@@ -66,7 +66,7 @@ resource "aws_security_group" "bastion" {
 
     cidr_blocks = [
       "73.150.1.0/24",    # Trung's home
-      "199.253.243.0/24", # Office wifi
+      "199.253.0.0/16", # Office wifi
     ]
 
     description = "Allow SSH"
