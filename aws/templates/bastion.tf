@@ -56,16 +56,34 @@ docker pull ${local.quorum_docker_image}
 
 export AWS_DEFAULT_REGION=${var.region}
 export TASK_REVISION=${aws_ecs_task_definition.quorum.revision}
-mkdir -p /qdata/mappings
-aws s3 cp --recursive s3://${local.s3_revision_folder}/ /qdata/
+mkdir -p ${local.shared_volume_container_path}/mappings
 
+count=0
+while [ $count -lt ${var.number_of_nodes} ]
+do
+  aws s3 cp --recursive s3://${local.s3_revision_folder}/ ${local.shared_volume_container_path}/
+  count=$(ls ${local.hosts_folder} | grep ^ip | wc -l)
+  echo Wait for nodes in Quorum network being up ... $count/${var.number_of_nodes}
+  sleep 1;
+done
 
 for t in `aws ecs list-tasks --cluster ${local.ecs_cluster_name} | jq -r .taskArns[]`
 do
   task_metadata=$(aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $t)
   HOST_IP=$(echo $task_metadata | jq -r '.tasks[0] | .containers[] | select(.name == "${local.quorum_run_container_name}") | .networkInterfaces[] | .privateIpv4Address')
   group=$(echo $task_metadata | jq -r '.tasks[0] | .group')
-  echo $group > /qdata/mappings/${local.normalized_host_ip}
+  echo $group > ${local.shared_volume_container_path}/mappings/${local.normalized_host_ip}
+done
+
+nodes=(${join(" ", aws_ecs_service.quorum.*.name)})
+cd ${local.shared_volume_container_path}/mappings
+for idx in "$${!nodes[@]}"
+do
+  f=$(grep -l $${nodes[$idx]} *)
+  ip=$(cat ${local.hosts_folder}/$f)
+  script="/usr/local/bin/Node$((idx+1))"
+  echo "sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port}" > $script
+  chmod +x $script
 done
 
 EOF
