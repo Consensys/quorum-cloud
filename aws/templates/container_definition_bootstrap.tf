@@ -26,23 +26,23 @@ locals {
   ]
 
   node_key_bootstrap_container_definition = {
-    name = "${local.node_key_bootstrap_container_name}"
-    image = "${local.quorum_docker_image}"
+    name      = "${local.node_key_bootstrap_container_name}"
+    image     = "${local.quorum_docker_image}"
     essential = "false"
 
     logConfiguration = {
       logDriver = "awslogs"
 
       options = {
-        awslogs-group = "${aws_cloudwatch_log_group.quorum.name}"
-        awslogs-region = "${var.region}"
+        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
+        awslogs-region        = "${var.region}"
         awslogs-stream-prefix = "logs"
       }
     }
 
     mountPoints = [
       {
-        sourceVolume = "${local.shared_volume_name}"
+        sourceVolume  = "${local.shared_volume_name}"
         containerPath = "${local.shared_volume_container_path}"
       },
     ]
@@ -54,9 +54,9 @@ locals {
     volumesFrom = []
 
     healthCheck = {
-      interval = 30
-      retries = 10
-      timeout = 60
+      interval    = 30
+      retries     = 10
+      timeout     = 60
       startPeriod = 300
 
       command = [
@@ -75,6 +75,53 @@ locals {
 
     cpu = 0
   }
+
+  // this is very BADDDDDD but for now i don't have any other better option
+  validator_address_program = <<EOP
+package main
+
+import (
+	"encoding/hex"
+	"fmt"
+	"os"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/p2p/discover"
+)
+
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("missing enode value")
+		os.Exit(1)
+	}
+	enode := os.Args[1]
+	nodeId, err := discover.HexID(enode)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	pub, err := nodeId.Pubkey()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Printf("0x%s\n", hex.EncodeToString(crypto.PubkeyToAddress(*pub).Bytes()))
+}
+EOP
+
+  // bootstrap the extraData, this must be used inside metadata_bootstrap_commands to inherit metadata info
+  istanbul_bootstrap_commands = [
+    "apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.7/community go=1.9.4-r0",
+    "apk add git gcc musl-dev linux-headers",
+    "git clone ${element(local.consensus_config_map["git_url"], 0)} /istanbul-tools/src/github.com/getamis/istanbul-tools",
+    "export GOPATH=/istanbul-tools",
+    "export GOROOT=/usr/lib/go",
+    "echo '${local.validator_address_program}' > /istanbul-tools/src/github.com/getamis/istanbul-tools/extra.go",
+    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do address=$(cat ${local.node_ids_folder}/$f); all=\"$all,$(go run /istanbul-tools/src/github.com/getamis/istanbul-tools/extra.go $address)\"; done",
+    "all=\"$${all:1}\"",
+    "echo Validator Addresses: $all",
+    "extraData=\"\\\"$(go run /istanbul-tools/src/github.com/getamis/istanbul-tools/cmd/istanbul/main.go extra encode --validators $all | awk -F: '{print $2}' | tr -d ' ')\\\"\"",
+  ]
 
   metadata_bootstrap_commands = [
     "set -e",
@@ -100,19 +147,28 @@ locals {
 
     "echo \"All containers have reported their IPs\"",
 
-    // Gather all Accounts to create genenis.json
+    // Gather all Accounts
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/accounts ${local.accounts_folder}; count=$(ls ${local.accounts_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their accounts ... $count/${var.number_of_nodes}\"; sleep 1; done",
 
     "echo \"All nodes have registered accounts\"",
-    "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done",
-    "alloc=\"{$${alloc:1}}\"",
-    "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/", "$1")}' | jq \". + { alloc : $alloc}\" > ${local.genenis_file}",
-    "cat ${local.genenis_file}",
 
     // Gather all Node IDs
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do aws s3 cp --recursive s3://${local.s3_revision_folder}/nodeids ${local.node_ids_folder}; count=$(ls ${local.node_ids_folder} | grep ^ip | wc -l); echo \"Wait for other nodes to report their IDs ... $count/${var.number_of_nodes}\"; sleep 1; done",
 
     "echo \"All nodes have registered their IDs\"",
+
+    // Prepare Genesis file
+    "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done",
+
+    "alloc=\"{$${alloc:1}}\"",
+    "extraData=\"\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\"\"",
+    "${var.consensus_mechanism == "istanbul" ? join("\n", local.istanbul_bootstrap_commands) : ""}",
+    "mixHash=\"\\\"${element(local.consensus_config_map["genesis_mixHash"], 0)}\\\"\"",
+    "difficulty=\"\\\"${element(local.consensus_config_map["genesis_difficulty"], 0)}\\\"\"",
+    "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/", "$1")}' | jq \". + { alloc : $alloc, extraData: $extraData, mixHash: $mixHash, difficulty: $difficulty}${var.consensus_mechanism == "istanbul" ? " | .config=.config + {istanbul: {epoch: 30000, policy: 0} }" : ""}\" > ${local.genesis_file}",
+    "cat ${local.genesis_file}",
+
+    // Write status
     "echo \"Done!\" > ${local.metadata_bootstrap_container_status_file}",
   ]
 

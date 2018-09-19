@@ -56,7 +56,7 @@ variable "tessera_docker_image_tag" {
 
 variable "aws_cli_docker_image" {
   description = "To interact with AWS services"
-  default     = "infrastructureascode/aws-cli"
+  default     = "senseyeio/alpine-aws-cli"
 }
 
 variable "aws_cli_docker_image_tag" {
@@ -80,4 +80,10 @@ variable "quorum_bucket" {
 
 variable "quorum_bucket_kms_key_arn" {
   description = "To encrypt/decrypt objects stored in quorum_bucket. This must be pre-initialized from `_terraform_init` run"
+}
+
+variable "access_bastion_cidr_blocks" {
+  type        = "list"
+  description = "CIDR blocks that will be added to allow SSH to Bastion Node"
+  default     = []
 }

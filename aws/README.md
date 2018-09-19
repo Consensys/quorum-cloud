@@ -63,6 +63,39 @@ If `network_name` is not provided, a random name will be generated.
 
 ### Step 3: Provisioning Quorum
 
+The only required inputs are subnets information:
+* `subnet_ids`: in which ECS provisions containers. These subnets must be routable to Internet (either they are public subnets by default or private subnets routed via NAT Gateway)
+* `is_igw_subnets`: `true` if the above `subnet_ids` are attached with Internet Gateway, `false` otherwise
+* `bastion_public_subnet_id`: where Bastion node lives. This must be a public subnet
+
+By default, new Quorum network will be using Raft as the consensus mechanism and Tessera as the privacy engine. 
+These can be customized via `consensus_mechanism` and `tx_privacy_engine` variables.
+
+Prepare `terraform.tfvars` as sample below:
+```
+is_igw_subnets = "false"
+
+# private subnets routable to Internet via NAT Gateway
+subnet_ids = [
+  "subnet-4c30c605",
+  "subnet-4c30c605",
+  "subnet-09263334",
+  "subnet-5236300a",
+]
+
+bastion_public_subnet_id = "subnet-3a8d8707"
+
+consensus_mechanism = "istanbul"
+
+# tx_privacy_engine = "constellation"
+
+# access_bastion_cidr_blocks = [
+#   "190.190.190.190/32",
+# ]
+```
+
+Run Terraform
+
 ```
 terraform init -backend-config=terraform.auto.backend-config
 terraform plan -out quorum.tfplan

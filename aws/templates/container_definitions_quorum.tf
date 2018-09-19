@@ -6,7 +6,7 @@ locals {
   quorum_password_file           = "${local.shared_volume_container_path}/passwords.txt"
   quorum_static_nodes_file       = "${local.quorum_data_dir}/static-nodes.json"
   quorum_permissioned_nodes_file = "${local.quorum_data_dir}/permissioned-nodes.json"
-  genenis_file                   = "${local.shared_volume_container_path}/genesis.json"
+  genesis_file                   = "${local.shared_volume_container_path}/genesis.json"
   node_id_file                   = "${local.shared_volume_container_path}/node_id"
   node_ids_folder                = "${local.shared_volume_container_path}/nodeids"
   accounts_folder                = "${local.shared_volume_container_path}/accounts"
@@ -21,14 +21,13 @@ locals {
     "echo \"[$all]\" > ${local.quorum_static_nodes_file}",
     "echo \"[$all]\" > ${local.quorum_permissioned_nodes_file}",
     "echo Permissioned Nodes: $(cat ${local.quorum_permissioned_nodes_file})",
-    "geth --datadir ${local.quorum_data_dir} init ${local.genenis_file}",
+    "geth --datadir ${local.quorum_data_dir} init ${local.genesis_file}",
   ]
 
   additional_args = "${local.consensus_config_map["geth_args"]}"
 
   geth_args = [
     "--datadir ${local.quorum_data_dir}",
-    "--permissioned",
     "--rpc",
     "--rpcaddr 0.0.0.0",
     "--rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,${var.consensus_mechanism}",
@@ -41,6 +40,8 @@ locals {
     "--verbosity 4",
   ]
 
+  geth_args_combined = "${join(" ", concat(local.geth_args, local.additional_args))}"
+
   quorum_run_commands = [
     "set -e",
     "echo Wait until metadata bootstrap completed ...",
@@ -48,7 +49,8 @@ locals {
     "echo Wait until ${var.tx_privacy_engine} is ready ...",
     "while [ ! -S \"${local.tx_privacy_engine_socket_file}\" ]; do sleep 1; done",
     "${local.quorum_config_commands}",
-    "geth ${join(" ", concat(local.geth_args, local.additional_args))}",
+    "echo 'Running geth with: ${local.geth_args_combined}'",
+    "geth ${local.geth_args_combined}",
   ]
 
   quorum_run_container_definition = {
@@ -134,7 +136,7 @@ locals {
     "difficulty" = "0x0"
     "extraData"  = "0x0000000000000000000000000000000000000000000000000000000000000000"
     "gasLimit"   = "0xE0000000"
-    "mixhash"    = "0x00000000000000000000000000000000000000647572616c65787365646c6578"
+    "mixHash"    = "0x00000000000000000000000000000000000000647572616c65787365646c6578"
     "nonce"      = "0x0"
     "parentHash" = "0x0000000000000000000000000000000000000000000000000000000000000000"
     "timestamp"  = "0x00"
