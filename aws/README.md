@@ -1,6 +1,16 @@
+Deploy Quorum Network in AWS using ECS Fargate, S3 and an EC2
+
 ## Deployment Architecture
 
-TBD
+```
+                   +----- Public Subnet -----+       +----- Private Subnet(s) ---+
+                   |                         |       |                           |
+Internet <--- [NAT Gateway]     [Bastion] ---------->|  [ECS] [ECS] [ECS] ....   |
+                 ^ |                         |       |                           |
+                 | +-------------------------+       +-------------.-------------+
+                 |                                                 |
+                 +------------------- Routable --------------------+ 
+```
 
 ### ECS Containers
 
