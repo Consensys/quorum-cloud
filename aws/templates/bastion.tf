@@ -62,7 +62,7 @@ count=0
 while [ $count -lt ${var.number_of_nodes} ]
 do
   aws s3 cp --recursive s3://${local.s3_revision_folder}/ ${local.shared_volume_container_path}/
-  count=$(ls ${local.hosts_folder} | grep ^ip | wc -l)
+  count=$(ls ${local.privacy_addresses_folder} | grep ^ip | wc -l)
   echo Wait for nodes in Quorum network being up ... $count/${var.number_of_nodes}
   sleep 1;
 done
@@ -79,19 +79,29 @@ do
   fi
 done
 
+cat <<SS > ${local.shared_volume_container_path}/quorum_metadata
+quorum:
+  nodes:
+SS
 nodes=(${join(" ", aws_ecs_service.quorum.*.name)})
 cd ${local.shared_volume_container_path}/mappings
 for idx in "$${!nodes[@]}"
 do
   f=$(grep -l $${nodes[$idx]} *)
   ip=$(cat ${local.hosts_folder}/$f)
-  script="/usr/local/bin/Node$((idx+1))"
+  nodeIdx=$((idx+1))
+  script="/usr/local/bin/Node$nodeIdx"
   cat <<SS > $script
 #!/bin/bash
 
 sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
 SS
   chmod +x $script
+  cat <<SS >> ${local.shared_volume_container_path}/quorum_metadata
+    Node$nodeIdx:
+      privacy-address: $(cat ${local.privacy_addresses_folder}/$f)
+      url: http://$ip:${local.quorum_rpc_port}
+SS
 done
 
 EOF

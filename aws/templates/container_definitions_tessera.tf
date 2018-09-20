@@ -1,14 +1,15 @@
 locals {
-  tessera_config_file = "${local.shared_volume_container_path}/tessera.cfg"
-  tessera_port        = 9000
-  tessera_command     = "java -jar /tessera/tessera-app.jar"
+  tessera_config_file  = "${local.shared_volume_container_path}/tessera.cfg"
+  tessera_port         = 9000
+  tessera_command      = "java -jar /tessera/tessera-app.jar"
+  tessera_pub_key_file = "${local.shared_volume_container_path}/.pub"
 
   tessera_config_commands = [
     "apk update",
     "apk add jq",
     "cd ${local.shared_volume_container_path}; echo \"\n\" | ${local.tessera_command} -keygen ${local.shared_volume_container_path}/",
     "export HOST_IP=$(cat ${local.host_ip_file})",
-    "export TM_PUB=$(cat ${local.shared_volume_container_path}/.pub)",
+    "export TM_PUB=$(cat ${local.tessera_pub_key_file})",
     "export TM_KEY=$(cat ${local.shared_volume_container_path}/.key)",
     "echo \"\nHost IP: $HOST_IP\"",
     "echo \"Public Key: $TM_PUB\"",

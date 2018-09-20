@@ -1,7 +1,8 @@
 locals {
-  shared_volume_name            = "quorum_shared_volume"
-  shared_volume_container_path  = "/qdata"
-  tx_privacy_engine_socket_file = "${local.shared_volume_container_path}/tm.ipc"
+  shared_volume_name             = "quorum_shared_volume"
+  shared_volume_container_path   = "/qdata"
+  tx_privacy_engine_socket_file  = "${local.shared_volume_container_path}/tm.ipc"
+  tx_privacy_engine_address_file = "${element(compact(local.tx_privacy_address_files), 0)}"
 
   node_key_bootstrap_container_name           = "node-key-bootstrap"
   metadata_bootstrap_container_name           = "metadata-bootstrap"
@@ -20,7 +21,7 @@ locals {
         "raftport=${local.raft_port}",
       ]
 
-      genesis_mixHash = ["0x00000000000000000000000000000000000000647572616c65787365646c6578"]
+      genesis_mixHash    = ["0x00000000000000000000000000000000000000647572616c65787365646c6578"]
       genesis_difficulty = ["0x00"]
     }
 
@@ -35,12 +36,17 @@ locals {
 
       enode_params = []
 
-      genesis_mixHash = ["0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"]
+      genesis_mixHash    = ["0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"]
       genesis_difficulty = ["0x01"]
 
       git_url = ["https://github.com/getamis/istanbul-tools"]
     }
   }
+
+  tx_privacy_address_files = [
+    "${var.tx_privacy_engine == "constellation" ? local.constellation_pub_key_file : ""}",
+    "${var.tx_privacy_engine == "tessera" ? local.tessera_pub_key_file : ""}",
+  ]
 
   common_container_definitions = [
     "${local.node_key_bootstrap_container_definition}",

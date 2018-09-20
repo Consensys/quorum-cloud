@@ -170,6 +170,10 @@ EOP
 
     // Write status
     "echo \"Done!\" > ${local.metadata_bootstrap_container_status_file}",
+
+    "echo Wait until privacy engine initialized ...",
+    "while [ ! -f \"${local.tx_privacy_engine_address_file}\" ]; do sleep 1; done",
+    "aws s3 cp ${local.tx_privacy_engine_address_file} s3://${local.s3_revision_folder}/privacyaddresses/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
   ]
 
   metadata_bootstrap_container_definition = {

@@ -10,6 +10,7 @@ locals {
   node_id_file                   = "${local.shared_volume_container_path}/node_id"
   node_ids_folder                = "${local.shared_volume_container_path}/nodeids"
   accounts_folder                = "${local.shared_volume_container_path}/accounts"
+  privacy_addresses_folder       = "${local.shared_volume_container_path}/privacyaddresses" # store Tessera pub keys
 
   consensus_config_map = "${local.consensus_config[var.consensus_mechanism]}"
 

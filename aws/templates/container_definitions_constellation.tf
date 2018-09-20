@@ -1,12 +1,13 @@
 locals {
-  constellation_config_file = "${local.shared_volume_container_path}/constellation.cfg"
-  constellation_port        = 10000
+  constellation_config_file  = "${local.shared_volume_container_path}/constellation.cfg"
+  constellation_port         = 10000
+  constellation_pub_key_file = "${local.shared_volume_container_path}/tm.pub"
 
   constellation_config_commands = [
     "constellation-node --generatekeys=${local.shared_volume_container_path}/tm < /dev/null",
     "export HOST_IP=$(cat ${local.host_ip_file})",
     "echo \"\nHost IP: $HOST_IP\"",
-    "echo \"Public Key: $(cat ${local.shared_volume_container_path}/tm.pub)\"",
+    "echo \"Public Key: $(cat ${local.constellation_pub_key_file})\"",
     "all=\"\"; for f in `ls ${local.hosts_folder} | grep -v ${local.normalized_host_ip}`; do ip=$(cat ${local.hosts_folder}/$f); all=\"$all,\\\"http://$ip:${local.constellation_port}/\\\"\"; done",
     "echo \"Creating ${local.constellation_config_file}\"",
     "echo \"# This file is auto generated. Please do not edit\" > ${local.constellation_config_file}",
