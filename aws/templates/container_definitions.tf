@@ -23,6 +23,8 @@ locals {
 
       genesis_mixHash    = ["0x00000000000000000000000000000000000000647572616c65787365646c6578"]
       genesis_difficulty = ["0x00"]
+
+      git_url = [""]
     }
 
     istanbul = {
