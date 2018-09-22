@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/trung/quorum-acceptance-test.svg?branch=master)](https://travis-ci.org/trung/quorum-acceptance-test)
+
 Using [Terraform](https://terraform.io) to bootstrap Quorum network in the cloud.
 
 ### Prerequisites
