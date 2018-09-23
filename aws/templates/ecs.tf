@@ -25,7 +25,7 @@ resource "aws_ecs_task_definition" "quorum" {
 
 resource "aws_ecs_service" "quorum" {
   count           = "${var.number_of_nodes}"
-  name            = "${format(local.service_name_fmt, count.index, var.network_name)}"
+  name            = "${format(local.service_name_fmt, count.index + 1, var.network_name)}"
   cluster         = "${aws_ecs_cluster.quorum.id}"
   task_definition = "${aws_ecs_task_definition.quorum.arn}"
   launch_type     = "FARGATE"
