@@ -61,9 +61,9 @@ mkdir -p ${local.shared_volume_container_path}/mappings
 count=0
 while [ $count -lt ${var.number_of_nodes} ]
 do
-  aws s3 cp --recursive s3://${local.s3_revision_folder}/ ${local.shared_volume_container_path}/ > /dev/null 2>&1
   count=$(ls ${local.privacy_addresses_folder} | grep ^ip | wc -l)
-  echo Wait for nodes in Quorum network being up ... $count/${var.number_of_nodes}
+  aws s3 cp --recursive s3://${local.s3_revision_folder}/ ${local.shared_volume_container_path}/ > /dev/null 2>&1 \
+    || echo Wait for nodes in Quorum network being up ... $count/${var.number_of_nodes}
   sleep 1;
 done
 
