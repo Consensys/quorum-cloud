@@ -120,4 +120,5 @@ If you wish to run `geth attach`, tunelling via SSH, to Node1:  run `ssh -t -i <
 
 ## Logging
 
-CloudWatch Log Group `/ecs/quorum/**`
+* Logs are available in CloudWatch Group `/ecs/quorum/**`
+* CPU and Memory utilization metrics are also available in CloudWatch
