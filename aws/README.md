@@ -61,7 +61,7 @@ and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars
 
 ```
 terraform init
-terraform apply -var network_name=dev -auto-approve
+terraform apply -var network_name=dev -var region=us-east-1 -auto-approve
 ```
 
 If `network_name` is not provided, a random name will be generated.
