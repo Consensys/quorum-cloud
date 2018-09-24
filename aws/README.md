@@ -40,8 +40,10 @@ This is to pave an environment with resources required for deployment.
 
 This has to be run once **per AWS Account and per region**.
 
+**Note**: AWS Fargate is only supported in certain regions, see [AWS Region Table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for more details.
+
 ```
-aws cloud-formation create-stack --stack-name quorum-prepare-environment --template-body file://./quorum-prepare-environment.cfn.yml
+aws cloudformation create-stack --stack-name quorum-prepare-environment --template-body file://./quorum-prepare-environment.cfn.yml
 ```
 
 * A S3 bucket to store Terraform state with default server-side-encryption enabled
@@ -71,6 +73,8 @@ The only required inputs are subnets information:
 By default, new Quorum network will be using Raft as the consensus mechanism and Tessera as the privacy engine. 
 These can be customized via `consensus_mechanism` and `tx_privacy_engine` variables.
 
+Also provide additional CIDR blocks so you can access bastion node via `access_bastion_cidr_blocks` variable
+
 Prepare `terraform.tfvars` as sample below:
 ```
 is_igw_subnets = "false"
@@ -97,7 +101,7 @@ consensus_mechanism = "istanbul"
 Run Terraform
 
 ```
-terraform init -backend-config=terraform.auto.backend-config
+terraform init -backend-config=terraform.auto.backend-config -reconfigure
 terraform plan -out quorum.tfplan
 terraform apply quorum.tfplan
 ```
@@ -107,9 +111,9 @@ This happens when you switch between Quorum deployments.
 
 After provisioning is finished, public DNS and IP of the bastion host will be output along with path to the SSH Private Key.
 Bastion Host is pre-configured with Docker and Quorum Docker Image which can be used to perform `geth attach`.
-To ssh to Bastion Host: run `ssh -i quorum.pem ec2-user@<Bastion DNS/IP>`. 
+To ssh to Bastion Host: run `ssh -i <private key file> ec2-user@<Bastion DNS/IP>`.
 
-If you wish to run `geth attach`, tunelling via SSH, to Node1:  run `ssh -t -i quorum.pem ec2-user@<bastion DNS/IP> Node1`
+If you wish to run `geth attach`, tunelling via SSH, to Node1:  run `ssh -t -i <private key file> ec2-user@<bastion DNS/IP> Node1`
 
 ## Logging
 
