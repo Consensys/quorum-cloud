@@ -1,6 +1,7 @@
 locals {
   host_ip_file         = "${local.shared_volume_container_path}/host_ip"
   task_revision_file   = "${local.shared_volume_container_path}/task_revision"
+  service_file         = "${local.shared_volume_container_path}/service"
   account_address_file = "${local.shared_volume_container_path}/first_account_address"
   hosts_folder         = "${local.shared_volume_container_path}/hosts"
 
@@ -135,6 +136,8 @@ EOP
     "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"${local.metadata_bootstrap_container_name}\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )",
     "echo \"Host IP: $HOST_IP\"",
     "echo $HOST_IP > ${local.host_ip_file}",
+    "export TASK_ARN=$(curl -s 169.254.170.2/v2/metadata | jq -r '.TaskARN')",
+    "aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $TASK_ARN | jq -r '.tasks[0] | .group' > ${local.service_file}",
     "mkdir -p ${local.hosts_folder}",
     "mkdir -p ${local.node_ids_folder}",
     "mkdir -p ${local.accounts_folder}",

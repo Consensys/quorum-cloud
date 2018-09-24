@@ -46,6 +46,18 @@ data "aws_iam_policy_document" "ecs_task" {
       "${aws_kms_key.bucket.arn}",
     ]
   }
+
+  statement {
+    sid = "AllowECS"
+
+    actions = [
+      "ecs:DescribeTasks"
+    ]
+
+    resources = [
+      "*"
+    ]
+  }
 }
 
 resource "aws_iam_policy" "ecs_task" {

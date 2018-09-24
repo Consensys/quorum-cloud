@@ -23,6 +23,7 @@ locals {
     "echo \"[$all]\" > ${local.quorum_permissioned_nodes_file}",
     "echo Permissioned Nodes: $(cat ${local.quorum_permissioned_nodes_file})",
     "geth --datadir ${local.quorum_data_dir} init ${local.genesis_file}",
+    "export IDENTITY=$(cat ${local.service_file})"
   ]
 
   additional_args = "${local.consensus_config_map["geth_args"]}"
@@ -39,6 +40,7 @@ locals {
     "--nodiscover",
     "--networkid ${random_integer.network_id.result}",
     "--verbosity 4",
+    "--identity $IDENTITY",
   ]
 
   geth_args_combined = "${join(" ", concat(local.geth_args, local.additional_args))}"
