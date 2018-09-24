@@ -1,5 +1,10 @@
 Deploy Quorum Network in AWS using ECS Fargate, S3 and an EC2
 
+**Note**:
+* AWS Fargate is only available in certain regions, see [AWS Region Table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for more details.
+* AWS Fargate has default limits which might impact the provisioning, see [Amazon ECS Service Limits](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_limits.html) for more details.
+
+
 ## Deployment Architecture
 
 ```
@@ -38,9 +43,7 @@ Internet <--- [NAT Gateway]     [Bastion] ---------->|  [ECS] [ECS] [ECS] ....  
 
 This is to pave an environment with resources required for deployment. 
 
-This has to be run once **per AWS Account and per region**.
-
-**Note**: AWS Fargate is only supported in certain regions, see [AWS Region Table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for more details.
+This has to be run once **per region and per AWS Account**.
 
 ```
 aws cloudformation create-stack --stack-name quorum-prepare-environment --template-body file://./quorum-prepare-environment.cfn.yml
