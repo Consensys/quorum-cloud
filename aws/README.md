@@ -109,14 +109,13 @@ terraform plan -out quorum.tfplan
 terraform apply quorum.tfplan
 ```
 
-During the `terraform init`, you may be asked if you want to copy existing state to the new backend, enter 'no'. 
-This happens when you switch between Quorum deployments.
+To check if the Quorum Network is up, ssh to Bastionn host `ssh -i <private key file> ec2-user@<Bastion DNS/IP>` then
+`tail -f /var/log/cloud-init-output.log`, completion of CloudInit means the Quorum Network is ready. Now you can do `geth attach` to any node:
+```bash
+$ Node1
+```
 
-After provisioning is finished, public DNS and IP of the bastion host will be output along with path to the SSH Private Key.
-Bastion Host is pre-configured with Docker and Quorum Docker Image which can be used to perform `geth attach`.
-To ssh to Bastion Host: run `ssh -i <private key file> ec2-user@<Bastion DNS/IP>`.
-
-If you wish to run `geth attach`, tunelling via SSH, to Node1:  run `ssh -t -i <private key file> ec2-user@<bastion DNS/IP> Node1`
+If you wish to run `geth attach` tunneling via SSH to Node1: `ssh -t -i <private key file> ec2-user@<bastion DNS/IP> Node1`
 
 ## Logging
 
