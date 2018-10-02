@@ -39,7 +39,8 @@ locals {
     "--password ${local.quorum_password_file}",
     "--nodiscover",
     "--networkid ${random_integer.network_id.result}",
-    "--verbosity 4",
+    "--verbosity 5",
+    "--debug",
     "--identity $IDENTITY",
   ]
 
