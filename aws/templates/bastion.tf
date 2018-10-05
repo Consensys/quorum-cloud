@@ -47,6 +47,12 @@ resource "aws_instance" "bastion" {
 
 set -e
 
+# START: added per suggestion from AWS support to mitigate an intermittent failures from yum update
+sleep 20
+yum clean all
+yum repolist
+# END
+
 yum -y update
 yum -y install jq
 yum -y install docker
