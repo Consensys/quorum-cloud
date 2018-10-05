@@ -54,9 +54,12 @@ aws cloudformation create-stack --stack-name quorum-prepare-environment --templa
 
 These above resources are exposed to CloudFormation Exports which will be used in subsequent Terraform executions
 
-### Step 2: `_terraform_init`
+### Step 2: Intializing Terraform
 
-This is to generate the backend configuration for `terraform init` by reading various CloudFormation Exports (from the above) 
+```
+cd _terraform_init
+```
+This is to generate the backend configuration for subsequent `terraform init` by reading various CloudFormation Exports (from the above)
 and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars`) that are used in **Step 3**
 
 ```
@@ -121,3 +124,9 @@ If you wish to run `geth attach` tunneling via SSH to Node1: `ssh -t -i <private
 
 * Logs are available in CloudWatch Group `/ecs/quorum/**`
 * CPU and Memory utilization metrics are also available in CloudWatch
+
+## Cleaning up
+
+```
+terraform destroy
+```
