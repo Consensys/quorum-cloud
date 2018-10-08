@@ -23,7 +23,7 @@ locals {
     "echo \"[$all]\" > ${local.quorum_permissioned_nodes_file}",
     "echo Permissioned Nodes: $(cat ${local.quorum_permissioned_nodes_file})",
     "geth --datadir ${local.quorum_data_dir} init ${local.genesis_file}",
-    "export IDENTITY=$(cat ${local.service_file})"
+    "export IDENTITY=$(cat ${local.service_file} | awk -F: '{print $2}')",
   ]
 
   additional_args = "${local.consensus_config_map["geth_args"]}"
@@ -42,6 +42,7 @@ locals {
     "--verbosity 5",
     "--debug",
     "--identity $IDENTITY",
+    "--ethstats \"$IDENTITY:${random_id.ethstat_secret.hex}@${aws_instance.bastion.private_ip}:${local.ethstats_port}\"",
   ]
 
   geth_args_combined = "${join(" ", concat(local.geth_args, local.additional_args))}"

@@ -112,13 +112,17 @@ terraform plan -out quorum.tfplan
 terraform apply quorum.tfplan
 ```
 
-To check if the Quorum Network is up, ssh to Bastionn host `ssh -i <private key file> ec2-user@<Bastion DNS/IP>` then
-`tail -f /var/log/cloud-init-output.log`, completion of CloudInit means the Quorum Network is ready. Now you can do `geth attach` to any node:
+Once completed, outputs will contain various information including bastion DNS/IP and private key file which can be
+used to perform SSH. **Note: you need to do `chmod 600` to the private key file**
+
+Now you can do `geth attach` to any node after ssh to the bastion `ssh -i <private key file> ec2-user@<bastion DNS/IP>`
 ```bash
 $ Node1
 ```
 
 If you wish to run `geth attach` tunneling via SSH to Node1: `ssh -t -i <private key file> ec2-user@<bastion DNS/IP> Node1`
+
+`ethstats` is also available at `http://<bastion DNS/IP>:3000`
 
 ## Logging
 

@@ -21,3 +21,4 @@ target/
 **/*.tfplan
 **/*.tfvars
 **/quorum-*.pem
+**/generated-*.sh

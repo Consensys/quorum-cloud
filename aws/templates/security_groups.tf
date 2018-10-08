@@ -13,6 +13,16 @@ resource "aws_security_group" "quorum" {
   tags = "${merge(local.common_tags, map("Name", format("quorum-sg-%s", var.network_name)))}"
 }
 
+resource "aws_security_group_rule" "ethstats" {
+  from_port         = "${local.ethstats_port}"
+  protocol          = "tcp"
+  security_group_id = "${aws_security_group.quorum.id}"
+  to_port           = "${local.ethstats_port}"
+  type              = "ingress"
+  self              = true
+  description       = "ethstats traffic"
+}
+
 resource "aws_security_group_rule" "geth_p2p" {
   from_port         = "${local.quorum_p2p_port}"
   protocol          = "tcp"
@@ -82,6 +92,20 @@ resource "aws_security_group" "bastion" {
     ]
 
     description = "Allow SSH"
+  }
+
+  ingress {
+    from_port = 3000
+    protocol  = "tcp"
+    to_port   = 3000
+
+    cidr_blocks = [
+      "73.150.1.0/24",  # Trung's home
+      "199.253.0.0/16", # Office wifi
+      "${var.access_bastion_cidr_blocks}"
+    ]
+
+    description = "Allow ethstats"
   }
 
   egress {
