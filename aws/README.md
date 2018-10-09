@@ -60,7 +60,7 @@ These above resources are exposed to CloudFormation Exports which will be used i
 cd _terraform_init
 ```
 This is to generate the backend configuration for subsequent `terraform init` by reading various CloudFormation Exports (from the above)
-and writing to files (`terraform.auto.backend-config` and `terraform.auto.tfvars`) that are used in **Step 3**
+and writing to files (`terraform.auto.backend_config` and `terraform.auto.tfvars`) that are used in **Step 3**
 
 ```
 terraform init
@@ -79,7 +79,7 @@ The only required inputs are subnets information:
 By default, new Quorum network will be using Raft as the consensus mechanism and Tessera as the privacy engine. 
 These can be customized via `consensus_mechanism` and `tx_privacy_engine` variables.
 
-Also provide additional CIDR blocks so you can access bastion node via `access_bastion_cidr_blocks` variable
+Also provide additional CIDR blocks via `access_bastion_cidr_blocks` variable so you can access bastion node.
 
 Prepare `terraform.tfvars` as sample below:
 ```
@@ -107,9 +107,8 @@ consensus_mechanism = "istanbul"
 Run Terraform
 
 ```
-terraform init -backend-config=terraform.auto.backend-config -reconfigure
-terraform plan -out quorum.tfplan
-terraform apply quorum.tfplan
+terraform init -backend-config=terraform.auto.backend_config -reconfigure
+terraform apply
 ```
 
 Once completed, outputs will contain various information including bastion DNS/IP and private key file which can be
