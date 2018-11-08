@@ -1,23 +1,27 @@
 locals {
   default_bastion_resource_name = "${format("quorum-bastion-%s", var.network_name)}"
-  ethstats_docker_image         = "puppeth/ethstats:latest"
-  ethstats_port                 = 3000
+  ethstats_docker_image = "puppeth/ethstats:latest"
+  ethstats_port = 3000
 }
 
 data "aws_ami" "this" {
   most_recent = true
 
   filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*"]
+    name = "name"
+    values = [
+      "amzn2-ami-hvm-*"]
   }
 
   filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
+    name = "virtualization-type"
+    values = [
+      "hvm"]
   }
 
-  owners = ["137112412989"] # amazon
+  owners = [
+    "137112412989"]
+  # amazon
 }
 
 resource "random_id" "ethstat_secret" {
@@ -26,27 +30,30 @@ resource "random_id" "ethstat_secret" {
 
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
-  rsa_bits  = "2048"
+  rsa_bits = "2048"
 }
 
 resource "aws_key_pair" "ssh" {
   public_key = "${tls_private_key.ssh.public_key_openssh}"
-  key_name   = "${local.default_bastion_resource_name}"
+  key_name = "${local.default_bastion_resource_name}"
 }
 
 resource "local_file" "private_key" {
   filename = "${path.module}/quorum-${var.network_name}.pem"
-  content  = "${tls_private_key.ssh.private_key_pem}"
+  content = "${tls_private_key.ssh.private_key_pem}"
 }
 
 resource "aws_instance" "bastion" {
-  ami                         = "${data.aws_ami.this.id}"
-  instance_type               = "t2.large"
-  vpc_security_group_ids      = ["${aws_security_group.quorum.id}", "${aws_security_group.bastion.id}"]
-  subnet_id                   = "${var.bastion_public_subnet_id}"
+  ami = "${data.aws_ami.this.id}"
+  instance_type = "t2.large"
+  vpc_security_group_ids = [
+    "${aws_security_group.quorum.id}",
+    "${aws_security_group.bastion-ssh.id}",
+    "${aws_security_group.bastion-ethstats.id}"]
+  subnet_id = "${var.bastion_public_subnet_id}"
   associate_public_ip_address = "true"
-  key_name                    = "${aws_key_pair.ssh.key_name}"
-  iam_instance_profile        = "${aws_iam_instance_profile.bastion.name}"
+  key_name = "${aws_key_pair.ssh.key_name}"
+  iam_instance_profile = "${aws_iam_instance_profile.bastion.name}"
 
   user_data = <<EOF
 #!/bin/bash
@@ -136,19 +143,19 @@ EOF
 
 resource "null_resource" "bastion_remote_exec" {
   triggers {
-    bastion             = "${aws_instance.bastion.public_dns}"
+    bastion = "${aws_instance.bastion.public_dns}"
     ecs_task_definition = "${aws_ecs_task_definition.quorum.revision}"
-    script              = "${md5(local_file.bootstrap.content)}"
+    script = "${md5(local_file.bootstrap.content)}"
   }
 
   provisioner "remote-exec" {
     script = "${local_file.bootstrap.filename}"
 
     connection {
-      host        = "${aws_instance.bastion.public_ip}"
-      user        = "ec2-user"
+      host = "${aws_instance.bastion.public_ip}"
+      user = "ec2-user"
       private_key = "${tls_private_key.ssh.private_key_pem}"
-      timeout     = "10m"
+      timeout = "10m"
     }
   }
 }
