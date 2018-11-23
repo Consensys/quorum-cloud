@@ -68,7 +68,7 @@ yum repolist
 
 yum -y update
 yum -y install jq
-yum -y install docker
+amazon-linux-extras install docker -y
 systemctl enable docker
 systemctl start docker
 docker pull ${local.quorum_docker_image}

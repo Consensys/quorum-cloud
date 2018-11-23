@@ -8,7 +8,7 @@ variable "network_name" {
 
 variable "number_of_nodes" {
   description = "Number of Quorum nodes. Default is 7"
-  default     = "7"
+  default = "7"
 }
 
 variable "bastion_public_subnet_id" {
@@ -16,7 +16,7 @@ variable "bastion_public_subnet_id" {
 }
 
 variable "subnet_ids" {
-  type        = "list"
+  type = "list"
   description = "List of subnet ids used by ECS to create instances. These subnets must be routable to the internet, via Internet Gateway or NAT instance"
 }
 
@@ -26,52 +26,52 @@ variable "is_igw_subnets" {
 
 variable "quorum_docker_image" {
   description = "URL to Quorum docker image to be used"
-  default     = "quorumengineering/quorum"
+  default = "quorumengineering/quorum"
 }
 
 variable "quorum_docker_image_tag" {
   description = "Quorum Docker image tag to be used"
-  default     = "latest"
+  default = "latest"
 }
 
 variable "constellation_docker_image" {
   description = "URL to Constellation docker image to be used. Only needed if tx_privacy_engine is constellation"
-  default     = "quorumengineering/constellation"
+  default = "quorumengineering/constellation"
 }
 
 variable "constellation_docker_image_tag" {
   description = "Constellation Docker image tag to be used"
-  default     = "latest"
+  default = "latest"
 }
 
 variable "tessera_docker_image" {
   description = "URL to Constellation docker image to be used. Only needed if tx_privacy_engine is constellation"
-  default     = "quorumengineering/tessera"
+  default = "quorumengineering/tessera"
 }
 
 variable "tessera_docker_image_tag" {
   description = "Tessera Docker image tag to be used"
-  default     = "latest"
+  default = "latest"
 }
 
 variable "aws_cli_docker_image" {
   description = "To interact with AWS services"
-  default     = "senseyeio/alpine-aws-cli"
+  default = "senseyeio/alpine-aws-cli"
 }
 
 variable "aws_cli_docker_image_tag" {
   description = "AWS CLI Docker image tag to be used"
-  default     = "latest"
+  default = "latest"
 }
 
 variable "consensus_mechanism" {
   description = "Concensus mechanism used in the network. Supported values are raft/istanbul"
-  default     = "raft"
+  default = "raft"
 }
 
 variable "tx_privacy_engine" {
   description = "Engine that implements transaction privacy. Supported values are constellation/tessera"
-  default     = "tessera"
+  default = "tessera"
 }
 
 variable "quorum_bucket" {
@@ -83,7 +83,12 @@ variable "quorum_bucket_kms_key_arn" {
 }
 
 variable "access_bastion_cidr_blocks" {
-  type        = "list"
+  type = "list"
   description = "CIDR blocks that will be added to allow SSH to Bastion Node"
-  default     = []
+  default = []
+}
+
+variable "enable_permissioning" {
+  description = "Permissioning via smart contract"
+  default = "false"
 }

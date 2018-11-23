@@ -1,9 +1,10 @@
 locals {
-  host_ip_file         = "${local.shared_volume_container_path}/host_ip"
-  task_revision_file   = "${local.shared_volume_container_path}/task_revision"
-  service_file         = "${local.shared_volume_container_path}/service"
+  host_ip_file = "${local.shared_volume_container_path}/host_ip"
+  task_revision_file = "${local.shared_volume_container_path}/task_revision"
+  service_file = "${local.shared_volume_container_path}/service"
   account_address_file = "${local.shared_volume_container_path}/first_account_address"
-  hosts_folder         = "${local.shared_volume_container_path}/hosts"
+  hosts_folder = "${local.shared_volume_container_path}/hosts"
+  genesis_code_file = "${local.shared_volume_container_path}/${local.permissioning_code_file}"
 
   metadata_bootstrap_container_status_file = "${local.shared_volume_container_path}/metadata_bootstrap_container_status"
 
@@ -27,23 +28,23 @@ locals {
   ]
 
   node_key_bootstrap_container_definition = {
-    name      = "${local.node_key_bootstrap_container_name}"
-    image     = "${local.quorum_docker_image}"
+    name = "${local.node_key_bootstrap_container_name}"
+    image = "${local.quorum_docker_image}"
     essential = "false"
 
     logConfiguration = {
       logDriver = "awslogs"
 
       options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
-        awslogs-region        = "${var.region}"
+        awslogs-group = "${aws_cloudwatch_log_group.quorum.name}"
+        awslogs-region = "${var.region}"
         awslogs-stream-prefix = "logs"
       }
     }
 
     mountPoints = [
       {
-        sourceVolume  = "${local.shared_volume_name}"
+        sourceVolume = "${local.shared_volume_name}"
         containerPath = "${local.shared_volume_container_path}"
       },
     ]
@@ -55,9 +56,9 @@ locals {
     volumesFrom = []
 
     healthCheck = {
-      interval    = 30
-      retries     = 10
-      timeout     = 60
+      interval = 30
+      retries = 10
+      timeout = 60
       startPeriod = 300
 
       command = [
@@ -144,6 +145,7 @@ EOP
     "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
     "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
     "aws s3 cp ${local.account_address_file} s3://${local.s3_revision_folder}/accounts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
+    "aws s3 cp s3://${local.quorum_bucket}/${aws_s3_bucket_object.genesis_alloc_account_code.key} ${local.genesis_code_file}",
 
     // Gather all IPs
     "count=0; while [ $count -lt ${var.number_of_nodes} ]; do count=$(ls ${local.hosts_folder} | grep ^ip | wc -l); aws s3 cp --recursive s3://${local.s3_revision_folder}/hosts ${local.hosts_folder} > /dev/null 2>&1 | echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 1; done",
@@ -163,7 +165,7 @@ EOP
     // Prepare Genesis file
     "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done",
 
-    "alloc=\"{$${alloc:1}}\"",
+    "${var.enable_permissioning == "true" ? "alloc=\"{\\\"${local.permissioning_alloc_address}\\\":{\\\"code\\\": \"\\\"$$(cat ${local.genesis_code_file})\\\"\", \\\"storage\\\":{\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\":\"\\\"0x0000000000000000000000000000000000000001\\\"\", \\\"${local.permissioning_alloc_storage_base}\\\":\"\\\"$$(cat ${local.account_address_file})\\\"\"}, \\\"balance\\\":\"\\\"1000000000000000000000000000\\\"\"}, $${alloc:1}}\"" : "alloc=\"{$${alloc:1}}\""}",
     "extraData=\"\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\"\"",
     "${var.consensus_mechanism == "istanbul" ? join("\n", local.istanbul_bootstrap_commands) : ""}",
     "mixHash=\"\\\"${element(local.consensus_config_map["genesis_mixHash"], 0)}\\\"\"",
@@ -180,23 +182,23 @@ EOP
   ]
 
   metadata_bootstrap_container_definition = {
-    name      = "${local.metadata_bootstrap_container_name}"
-    image     = "${local.aws_cli_docker_image}"
+    name = "${local.metadata_bootstrap_container_name}"
+    image = "${local.aws_cli_docker_image}"
     essential = "false"
 
     logConfiguration = {
       logDriver = "awslogs"
 
       options = {
-        awslogs-group         = "${aws_cloudwatch_log_group.quorum.name}"
-        awslogs-region        = "${var.region}"
+        awslogs-group = "${aws_cloudwatch_log_group.quorum.name}"
+        awslogs-region = "${var.region}"
         awslogs-stream-prefix = "logs"
       }
     }
 
     mountPoints = [
       {
-        sourceVolume  = "${local.shared_volume_name}"
+        sourceVolume = "${local.shared_volume_name}"
         containerPath = "${local.shared_volume_container_path}"
       },
     ]
@@ -212,9 +214,9 @@ EOP
     ]
 
     healthCheck = {
-      interval    = 30
-      retries     = 10
-      timeout     = 60
+      interval = 30
+      retries = 10
+      timeout = 60
       startPeriod = 300
 
       command = [
