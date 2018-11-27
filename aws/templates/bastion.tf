@@ -9,18 +9,32 @@ data "aws_ami" "this" {
 
   filter {
     name = "name"
+
     values = [
-      "amzn2-ami-hvm-*"]
+      "amzn2-ami-hvm-*",
+    ]
   }
 
   filter {
     name = "virtualization-type"
+
     values = [
-      "hvm"]
+      "hvm",
+    ]
+  }
+
+  filter {
+    name = "architecture"
+
+    values = [
+      "x86_64",
+    ]
   }
 
   owners = [
-    "137112412989"]
+    "137112412989",
+  ]
+
   # amazon
 }
 
@@ -46,10 +60,13 @@ resource "local_file" "private_key" {
 resource "aws_instance" "bastion" {
   ami = "${data.aws_ami.this.id}"
   instance_type = "t2.large"
+
   vpc_security_group_ids = [
     "${aws_security_group.quorum.id}",
     "${aws_security_group.bastion-ssh.id}",
-    "${aws_security_group.bastion-ethstats.id}"]
+    "${aws_security_group.bastion-ethstats.id}",
+  ]
+
   subnet_id = "${var.bastion_public_subnet_id}"
   associate_public_ip_address = "true"
   key_name = "${aws_key_pair.ssh.key_name}"
@@ -68,7 +85,7 @@ yum repolist
 
 yum -y update
 yum -y install jq
-yum -y install docker
+amazon-linux-extras install docker -y
 systemctl enable docker
 systemctl start docker
 docker pull ${local.quorum_docker_image}
