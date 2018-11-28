@@ -1,0 +1,75 @@
+regions:
+- global
+- _REGION_
+
+account-blacklist:
+- "999999999999" # production
+
+resource-types:
+  targets:
+  - S3Bucket
+  - EC2Instance
+  - EC2SecurityGroup
+  - ECSCluster
+  - EC2KeyPair
+  - IAMPolicy
+  - IAMRole
+  - ECSService
+  - ECSTaskDefinition
+  - IAMInstanceProfile
+  - IAMRolePolicyAttachment
+  - IAMInstanceProfileRole
+
+accounts:
+  128367567151:
+    filters:
+      EC2Instance:
+      - property: "tag:NetworkName"
+        value: "_NETWORK_NAME_"
+        invert: true
+      EC2SecurityGroup:
+      - property: "Name"
+        type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      ECSCluster:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      ECSService:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      ECSTaskDefinition:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      EC2KeyPair:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      S3Bucket:
+      - property: "Bucket"
+        type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      IAMPolicy:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      IAMRole:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      IAMInstanceProfile:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      IAMRolePolicyAttachment:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      IAMInstanceProfileRole:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
