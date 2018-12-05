@@ -24,9 +24,10 @@ locals {
     useWhiteList = false
 
     jdbc = {
-      username = "sa"
-      password = ""
-      url      = "jdbc:h2:${local.quorum_data_dir}/db;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=0"
+      username         = "sa"
+      password         = ""
+      url              = "jdbc:h2:${local.quorum_data_dir}/db;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=0"
+      autoCreateTables = true
     }
 
     server = {
