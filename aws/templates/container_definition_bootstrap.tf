@@ -169,7 +169,7 @@ EOP
     "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; storage_postfix=$(printf \"%04x\" $${storage_key_postfix}); storage_key_postfix=$((storage_key_postfix+1)); storageKey=\"${local.permissioning_alloc_storage_prefix}$${storage_postfix}\" storage=\"$storage, \\\"$${storageKey}\\\": \\\"$${address}\\\"\"; done",
 
     "code=$(cat ${local.genesis_code_file})",
-    "alloc=\"{{\\\"${local.permissioning_alloc_address}\\\": {\\\"code\\\": \\\"$${code}\\\", \\\"balance\\\": \"\\\"1000000000000000000000000000\\\"\", \\\"storage\\\": {$${storage}}}} $${alloc}}\"",
+    "${var.enable_permissioning == "true" ? "alloc=\"{{\\\"${local.permissioning_alloc_address}\\\": {\\\"code\\\": \\\"$${code}\\\", \\\"balance\\\": \"\\\"1000000000000000000000000000\\\"\", \\\"storage\\\": {$${storage}}}} $${alloc}}\"" : "alloc=\"{$${alloc:1}}\""}",
     "extraData=\"\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\"\"",
     "${var.consensus_mechanism == "istanbul" ? join("\n", local.istanbul_bootstrap_commands) : ""}",
     "mixHash=\"\\\"${element(local.consensus_config_map["genesis_mixHash"], 0)}\\\"\"",
