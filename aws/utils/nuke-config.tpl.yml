@@ -19,6 +19,7 @@ resource-types:
   - IAMInstanceProfile
   - IAMRolePolicyAttachment
   - IAMInstanceProfileRole
+  - CloudWatchLogsLogGroup
 
 accounts:
   128367567151:
@@ -73,3 +74,8 @@ accounts:
       - type: contains
         value: "_NETWORK_NAME_"
         invert: true
+      CloudWatchLogsLogGroup:
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      
