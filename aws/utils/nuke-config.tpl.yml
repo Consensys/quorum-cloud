@@ -8,6 +8,7 @@ account-blacklist:
 resource-types:
   targets:
   - S3Bucket
+  - S3Object
   - EC2Instance
   - EC2SecurityGroup
   - ECSCluster
@@ -50,8 +51,11 @@ accounts:
         value: "_NETWORK_NAME_"
         invert: true
       S3Bucket:
-      - property: "Bucket"
-        type: contains
+      - type: contains
+        value: "_NETWORK_NAME_"
+        invert: true
+      S3Object:
+      - type: contains
         value: "_NETWORK_NAME_"
         invert: true
       IAMPolicy:
