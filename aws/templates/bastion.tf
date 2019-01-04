@@ -119,6 +119,13 @@ do
   sleep 1
 done
 
+if which jq >/dev/null; then
+  echo "Found jq"
+else
+  echo "jq not found. Instaling ..."
+  sudo yum -y install jq
+fi
+
 for t in `aws ecs list-tasks --cluster ${local.ecs_cluster_name} | jq -r .taskArns[]`
 do
   task_metadata=$(aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $t)
