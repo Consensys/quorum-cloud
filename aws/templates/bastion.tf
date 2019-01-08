@@ -160,6 +160,7 @@ SS
     Node$nodeIdx:
       privacy-address: $(cat ${local.privacy_addresses_folder}/$f)
       url: http://$ip:${local.quorum_rpc_port}
+      third-party-url: http://$ip:${local.tessera_thirdparty_port}
 SS
 done
 EOF

@@ -66,6 +66,17 @@ resource "aws_security_group_rule" "tessera" {
   description = "Tessera API traffic"
 }
 
+resource "aws_security_group_rule" "tessera_thirdparty" {
+  count = "${var.tx_privacy_engine == "tessera" ? 1 : 0}"
+  from_port = "${local.tessera_thirdparty_port}"
+  protocol = "tcp"
+  security_group_id = "${aws_security_group.quorum.id}"
+  to_port = "${local.tessera_thirdparty_port}"
+  type = "ingress"
+  self = "true"
+  description = "Tessera Thirdparty API traffic"
+}
+
 resource "aws_security_group_rule" "raft" {
   count = "${var.consensus_mechanism == "raft" ? 1 : 0}"
   from_port = "${local.raft_port}"
