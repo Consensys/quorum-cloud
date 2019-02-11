@@ -3,14 +3,6 @@
 # This script installs the dependencies needed to bring up the 4node network for a specific consensus and run the automated acceptance test against it
 
 echo "install started..."
-#git clone https://github.com/jpmorganchase/quorum-acceptance-tests.git $TRAVIS_HOME/quorum-acceptance-tests
-git clone --branch=quorum-travis-ci-accept-test-integ https://github.com/amalrajmani/quorum-acceptance-tests.git $TRAVIS_HOME/quorum-acceptance-tests
-echo "cloned acceptance tests"
-#git clone https://github.com/jpmorganchase/quorum-cloud.git $TRAVIS_HOME/quorum-cloud
-git clone --branch=travis-ci-integ https://github.com/QuorumEngineering/quorum-cloud.git $TRAVIS_HOME/quorum-cloud
-echo "cloned quorum cloud"
-sudo chmod 755 $TRAVIS_HOME/quorum-cloud/travis/install-linux.sh
-sudo chmod 755 $TRAVIS_HOME/quorum-cloud/travis/script-linux.sh
 sudo apt update
 sudo apt -y install dpkg
 echo "installing jre 8.."
