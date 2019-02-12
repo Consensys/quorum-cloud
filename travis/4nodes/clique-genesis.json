@@ -19,7 +19,6 @@
   "coinbase": "0x0000000000000000000000000000000000000000",
   "config": {
     "byzantiumBlock": 1,
-    "homesteadBlock": 0,
     "chainId": 10,
     "eip150Block": 1,
     "eip155Block": 0,
