@@ -9,5 +9,6 @@ Download Terraform runtime to your machine:
 
 ### Getting Started
 
-Follow the documentation for a particular cloud provider:
+Follow the documentation for a particular platform:
 * [AWS](aws/README.md)
+* [Travis CI](travis/README.md)
