@@ -2,7 +2,7 @@
 set -u
 set -e
 
-for i in {1..7}
+for i in {1..4}
 do
     DDIR="qdata/c$i"
     mkdir -p $DDIR
