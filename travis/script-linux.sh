@@ -6,16 +6,7 @@
 consensus=${TF_VAR_consensus_mechanism}
 
 echo "script started for consensus: $consensus ..."
-export PATH=${GOROOT}/bin:$PATH
 set -e
-sudo modprobe fuse
-sudo chmod 666 /dev/fuse
-sudo chown root:$USER /etc/fuse.conf
-cd $TRAVIS_BUILD_DIR
-echo "installing quorum..."
-go run build/ci.go install
-set -e
-export PATH=$TRAVIS_BUILD_DIR/build/bin:$PATH
 echo "start quorum network for consensus $consensus ..."
 cd $TRAVIS_HOME/quorum-cloud/travis/4nodes
 ./init.sh $consensus
