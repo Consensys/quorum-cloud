@@ -38,30 +38,19 @@ if [ "$TESSERA_VERSION" == "latest" ] || [ "$V" == "$TESSERA_VERSION" ]; then
   {
     "app":"ThirdParty",
     "enabled": true,
-    "serverSocket":{
-      "type":"INET",
-      "port": ${local.tessera_thirdparty_port},
-      "hostName": "http://$HOST_IP"
-    },
+    "serverAddress": "http://$HOST_IP:${local.tessera_thirdparty_port}",
     "communicationType" : "REST"
   },
   {
     "app":"Q2T",
     "enabled": true,
-    "serverSocket":{
-      "type":"UNIX",
-      "path":"${local.tx_privacy_engine_socket_file}"
-    },
-    "communicationType" : "UNIX_SOCKET"
+    "serverAddress": "unix:${local.tx_privacy_engine_socket_file}",
+    "communicationType" : "REST"
   },
   {
     "app":"P2P",
     "enabled": true,
-    "serverSocket":{
-      "type":"INET",
-      "port": ${local.tessera_port},
-      "hostName": "http://$HOST_IP"
-    },
+    "serverAddress": "http://$HOST_IP:${local.tessera_port}",
     "sslConfig": {
       "tls": "OFF",
       "generateKeyStoreIfNotExisted": true,
