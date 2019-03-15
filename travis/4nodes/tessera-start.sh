@@ -66,13 +66,18 @@ fi
 #extract the tessera version from the jar
 TESSERA_VERSION=$(unzip -p $tesseraJar META-INF/MANIFEST.MF | grep Tessera-Version | cut -d" " -f2)
 echo "Tessera version (extracted from manifest file): $TESSERA_VERSION"
-V=$(echo -e "0.8\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
+V08=$(echo -e "0.8\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
+V09=$(echo -e "0.9\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
 
 TESSERA_CONFIG_TYPE=
-
-if [[ "$V" == "$TESSERA_VERSION" ]]; then
-    TESSERA_CONFIG_TYPE="-enhanced-"
-fi
+case "$TESSERA_VERSION" in
+    "$V09")
+        TESSERA_CONFIG_TYPE="-09-"
+        ;;
+    "$V08")
+        TESSERA_CONFIG_TYPE="-enhanced-"
+        ;;
+esac
 
 echo Config type $TESSERA_CONFIG_TYPE
 
