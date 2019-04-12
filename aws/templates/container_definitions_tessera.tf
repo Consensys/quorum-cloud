@@ -23,9 +23,12 @@ locals {
 DDIR=${local.quorum_data_dir}
 unzip -p /tessera/tessera-app.jar META-INF/MANIFEST.MF | grep Tessera-Version | cut -d: -f2 | xargs
 echo "Tessera Version: $TESSERA_VERSION"
-if [ "$TESSERA_VERSION" == "latest" ] || [ "$V" == "$TESSERA_VERSION" ]; then
-  # use enhanced config
-  cat <<EOF > ${local.tessera_config_file}
+V08=$$(echo -e "0.8\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
+V09=$$(echo -e "0.9\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
+case "$TESSERA_VERSION" in
+    "$V09")
+    # use new config
+    cat <<EOF > ${local.tessera_config_file}
 {
   "useWhiteList": false,
   "jdbc": {
@@ -82,10 +85,83 @@ if [ "$TESSERA_VERSION" == "latest" ] || [ "$V" == "$TESSERA_VERSION" ]; then
   },
   "alwaysSendTo": []
 }
+EOF    
+      ;;
+    "$V08")
+      # use enhanced config
+      cat <<EOF > ${local.tessera_config_file}
+{
+  "useWhiteList": false,
+  "jdbc": {
+    "username": "sa",
+    "password": "",
+    "url": "jdbc:h2:./$${DDIR}/db;MODE=Oracle;TRACE_LEVEL_SYSTEM_OUT=0",
+    "autoCreateTables": true
+  },
+  "serverConfigs":[
+  {
+    "app":"ThirdParty",
+    "enabled": true,
+    "serverSocket":{
+      "type":"INET",
+      "port": ${local.tessera_thirdparty_port},
+      "hostName": "http://$HOST_IP"
+    },
+    "communicationType" : "REST"
+  },
+  {
+    "app":"Q2T",
+    "enabled": true,
+    "serverSocket":{
+      "type":"UNIX",
+      "path":"${local.tx_privacy_engine_socket_file}"
+    },
+    "communicationType" : "UNIX_SOCKET"
+  },
+  {
+    "app":"P2P",
+    "enabled": true,
+    "serverSocket":{
+      "type":"INET",
+      "port": ${local.tessera_port},
+      "hostName": "http://$HOST_IP"
+    },
+    "sslConfig": {
+      "tls": "OFF",
+      "generateKeyStoreIfNotExisted": true,
+      "serverKeyStore": "$${DDIR}/server-keystore",
+      "serverKeyStorePassword": "quorum",
+      "serverTrustStore": "$${DDIR}/server-truststore",
+      "serverTrustStorePassword": "quorum",
+      "serverTrustMode": "TOFU",
+      "knownClientsFile": "$${DDIR}/knownClients",
+      "clientKeyStore": "$${DDIR}/client-keystore",
+      "clientKeyStorePassword": "quorum",
+      "clientTrustStore": "$${DDIR}/client-truststore",
+      "clientTrustStorePassword": "quorum",
+      "clientTrustMode": "TOFU",
+      "knownServersFile": "$${DDIR}/knownServers"
+    },
+    "communicationType" : "REST"
+  }
+  ],
+  "peer": $all,
+  "keys": {
+    "passwords": [],
+    "keyData": [
+      {
+        "config": $TM_KEY,
+        "publicKey": "$TM_PUB"
+      }
+    ]
+  },
+  "alwaysSendTo": []
+}
 EOF
-else
-  # use old config
-  cat <<EOF > ${local.tessera_config_file}
+      ;;
+    *)
+    # use old config
+    cat <<EOF > ${local.tessera_config_file}
 {
     "useWhiteList": false,
     "jdbc": {
@@ -128,7 +204,8 @@ else
     "unixSocketFile": "${local.tx_privacy_engine_socket_file}"
 }
 EOF
-fi
+      ;;
+esac
 cat ${local.tessera_config_file}
 SCRIPT
   ]
