@@ -55,6 +55,10 @@ resource "aws_key_pair" "ssh" {
 resource "local_file" "private_key" {
   filename = "${path.module}/quorum-${var.network_name}.pem"
   content = "${tls_private_key.ssh.private_key_pem}"
+  provisioner "local-exec" {
+    on_failure = "continue"
+    command = "chmod 600 ${self.filename}"
+  }
 }
 
 resource "aws_instance" "bastion" {

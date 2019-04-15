@@ -26,7 +26,7 @@ echo "Tessera Version: $TESSERA_VERSION"
 V08=$$(echo -e "0.8\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
 V09=$$(echo -e "0.9\n$TESSERA_VERSION" | sort -n -r -t '.' -k 1,1 -k 2,2 | head -n1)
 case "$TESSERA_VERSION" in
-    "$V09")
+    "$V09"|latest)
     # use new config
     cat <<EOF > ${local.tessera_config_file}
 {
