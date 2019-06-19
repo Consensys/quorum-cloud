@@ -59,7 +59,7 @@ The Bastion is publically accessible and enables `geth attach` to each Quorum no
     aws configure
     ```
     Follow the prompts to provide credentials and preferences for the AWS CLI
-* Create an AWS VPC and Subnets (only required if not having one)
+* Create an AWS VPC with Subnets if one does not already exist
     * Create a VPC with a public and private subnet and corresponding networking as visualised in the above diagram
     * For more help see the [AWS documentation](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) 
 
