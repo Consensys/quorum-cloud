@@ -1,13 +1,13 @@
 ## Quorum Cloud: AWS
 
-Deploy a 7node Quorum Network in AWS using [Terraform](https://terraform.io).
+Deploy a Quorum Network in AWS using [Terraform](https://terraform.io).
 
 > AWS Fargate is only available in certain regions, see [AWS Region Table](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) for more details.
 
 > AWS Fargate has default limits which might impact the provisioning, see [Amazon ECS Service Limits](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_limits.html) for more details.
 
 ## What will this create?
-This will create a 7node Quorum network using AWS ECS Fargate, S3 and an EC2.  The network can be configured to use either Raft or Istanbul consensus and either Tessera or Constellation privacy managers. 
+This will create a Quorum network (with 7 nodes by default) using AWS ECS Fargate, S3 and an EC2.  The network can be configured to use either Raft or Istanbul consensus and either Tessera or Constellation privacy managers. 
 
 ### Overview
 
@@ -42,7 +42,7 @@ Each ECS Service contains the following Tasks to bootstrap and start the node pa
   * `{tx-privacy-engine}-run`: start the privacy manager
   * `quorum-run`: start Quorum
 
-#### Bastion container
+#### Bastion node
 
 The Bastion is publically accessible and enables `geth attach` to each Quorum node in the private subnet.  Additionally it exposes `ethstats` to more easily view activity on the network. 
 
@@ -59,7 +59,7 @@ The Bastion is publically accessible and enables `geth attach` to each Quorum no
     aws configure
     ```
     Follow the prompts to provide credentials and preferences for the AWS CLI
-* Create an AWS VPC
+* Create an AWS VPC and Subnets (only required if not having one)
     * Create a VPC with a public and private subnet and corresponding networking as visualised in the above diagram
     * For more help see the [AWS documentation](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) 
 
@@ -80,7 +80,7 @@ This will create a CloudFormation stack containing the following AWS resources:
 
 These resources are exposed to CloudFormation Exports which will be used in subsequent steps.
 
-### Step 2: Intialize Terraform
+### Step 2: Initialize Terraform
 
 This will read from CloudFormation Exports to generate two files (`terraform.auto.backend_config` and `terraform.auto.tfvars`) that are used in later steps.
 
@@ -131,6 +131,8 @@ consensus_mechanism = "istanbul"
 * `consensus_mechanism`: the default value is `raft`
 * `tx_privacy_engine`: the default value is `tessera`
 * `access_bastion_cidr_blocks`: In order to access the Bastion node from a particular IP/set of IPs the corresponding CIDR blocks must be set
+
+**Note:** [`variables.tf`](templates/variables.tf) contains full options to configure the network
 
 ### Step 4: Deploy the network
 
@@ -186,6 +188,8 @@ ssh -t -i <private-key-file> ec2-user@<bastion-DNS/IP> Node1
 cd /path/to/quorum-cloud/aws/templates/
 terraform destroy
 ```
+
+Note: In case `terraform destroy` is unable to detroy all the AWS resources, run [`utils/cleanup.sh`](utils/cleanup) (which uses [aws-nuke](https://github.com/rebuy-de/aws-nuke)) to perform full clean up
 
 ## Logging
 
