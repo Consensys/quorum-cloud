@@ -1,14 +1,8 @@
-**Note: This method is not for production deployment. It's best used for testing/researching Quorum**
+## Quorum Cloud
+> Quorum Cloud **should not be used for production deployments**.  It is intended to be used for experimenting with, and testing, Quorum
 
-Using [Terraform](https://terraform.io) to bootstrap Quorum network in the cloud.
-
-### Prerequisites
-Download Terraform runtime to your machine:
-* From [HashiCorp website](https://www.terraform.io/downloads.html)
-* MacOS: `brew install terraform`
+Quorum Cloud can be used to bootstrap a Quorum network in the cloud.  The currently supported platforms are AWS and Travis CI.
 
 ### Getting Started
-
-Follow the documentation for a particular platform:
-* [AWS](aws/README.md)
-* [Travis CI](travis/README.md)
+* [AWS](aws/README.md): Deploy a 7nodes network on AWS
+* [Travis CI](travis/README.md): Deploy a 4nodes network within a Travis container 
