@@ -131,12 +131,13 @@ locals {
 
     "config" = {
       "homesteadBlock" = 0
-      "byzantiumBlock" = 1
+      "byzantiumBlock" = 0
+      "constantinopleBlock" = 0
       "chainId" = "${random_integer.network_id.result}"
-      "eip150Block" = 1
+      "eip150Block" = 0
       "eip155Block" = 0
       "eip150Hash" = "0x0000000000000000000000000000000000000000000000000000000000000000"
-      "eip158Block" = 1
+      "eip158Block" = 0
       "isQuorum" = "true"
     }
 
