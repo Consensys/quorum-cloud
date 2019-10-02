@@ -65,20 +65,18 @@ variable "aws_cli_docker_image_tag" {
 }
 
 variable "consensus_mechanism" {
-  description = "Concensus mechanism used in the network. Supported values are raft/istanbul"
+  description = "Concensus mechanism used in the network. Supported values are raft/istanbul/clique"
   default     = "raft"
 }
 
-variable "ethereum_flag" {
-  type = "string"
-  description = "indicates if the platform used is ethereum or quorum. if it is ethereum then tessera is turned off and clique consensus is used. Supported values are yes/no"
-  default     = "no"
+variable "is_ethereum_network" {
+  description = "indicates if the platform used is ethereum or quorum. if it is ethereum then tessera is turned off and clique consensus is used. Supported values are true/false"
+  default     = false
 }
 
-variable "ethereum_ver1_9" {
-  type = "string"
-  description = "indicates if the ethereum version is 1.9. Supported values are yes/no"
-  default     = "no"
+variable "is_ethereum_v1_9_x" {
+  description = "indicates if the go-ethereum version is 1.9. Supported values are true/false. Only used when is_ethereum_network is true"
+  default     = true
 }
 
 variable "tx_privacy_engine" {

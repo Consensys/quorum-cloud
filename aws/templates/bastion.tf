@@ -100,7 +100,7 @@ EOF
   tags = "${merge(local.common_tags, map("Name", local.default_bastion_resource_name))}"
 }
 
-resource "local_file" "qrm_bootstrap" {
+resource "local_file" "quorum_bootstrap" {
   filename = "${path.module}/generated-bootstrap-qrm.sh"
 
   content = <<EOF
@@ -228,7 +228,7 @@ do
   cat <<SS | sudo tee $script
 #!/bin/bash
 
-sudo docker run --rm -it ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
+sudo docker run --rm -it --entrypoint geth ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
 SS
   sudo chmod +x $script
   cat <<SS | sudo tee -a ${local.shared_volume_container_path}/quorum_metadata
@@ -243,11 +243,11 @@ resource "null_resource" "bastion_remote_exec" {
   triggers {
     bastion = "${aws_instance.bastion.public_dns}"
     ecs_task_definition = "${aws_ecs_task_definition.quorum.revision}"
-    script = "${var.ethereum_flag == "yes"? md5(local_file.eth_bootstrap.content) : md5(local_file.qrm_bootstrap.content)}"
+    script = "${var.is_ethereum_network == "true"? md5(local_file.eth_bootstrap.content) : md5(local_file.quorum_bootstrap.content)}"
   }
 
   provisioner "remote-exec" {
-    script = "${var.ethereum_flag == "yes"? local_file.eth_bootstrap.filename : local_file.qrm_bootstrap.filename}"
+    script = "${var.is_ethereum_network == "true"? local_file.eth_bootstrap.filename : local_file.quorum_bootstrap.filename}"
 
     connection {
       host = "${aws_instance.bastion.public_ip}"

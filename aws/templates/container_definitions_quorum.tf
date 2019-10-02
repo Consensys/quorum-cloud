@@ -43,7 +43,7 @@ locals {
     "--verbosity 5",
     "--debug",
     "--identity $IDENTITY",
-    "${var.ethereum_ver1_9 == "yes" ? "--allow-insecure-unlock" : ""}",
+    "${var.is_ethereum_v1_9_x == "true" ? "--allow-insecure-unlock" : ""}",
     "--ethstats \"$IDENTITY:${random_id.ethstat_secret.hex}@${aws_instance.bastion.private_ip}:${local.ethstats_port}\"",
   ]
 

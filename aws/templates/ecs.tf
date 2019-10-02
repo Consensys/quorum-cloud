@@ -10,7 +10,7 @@ resource "aws_ecs_cluster" "quorum" {
 
 resource "aws_ecs_task_definition" "quorum" {
   family                   = "quorum-${var.consensus_mechanism}-${var.tx_privacy_engine}-${var.network_name}"
-  container_definitions    = "${var.ethereum_flag == "yes" ? replace(element(compact(local.eth_container_definitions), 0), "/\"(true|false|[0-9]+)\"/", "$1") : replace(element(compact(local.quorum_container_definitions), 0), "/\"(true|false|[0-9]+)\"/", "$1") }"
+  container_definitions    = "${var.is_ethereum_network == "true" ? replace(element(compact(local.eth_container_definitions), 0), "/\"(true|false|[0-9]+)\"/", "$1") : replace(element(compact(local.quorum_container_definitions), 0), "/\"(true|false|[0-9]+)\"/", "$1") }"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "4096"
   memory                   = "8192"

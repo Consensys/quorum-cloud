@@ -64,7 +64,7 @@ locals {
     "${var.tx_privacy_engine == "tessera" ? local.tessera_pub_key_file : ""}",
   ]
 
-  qrm_common_container_definitions = [
+  quorum_common_container_definitions = [
     "${local.node_key_bootstrap_container_definition}",
     "${local.metadata_bootstrap_container_definition}",
     "${local.quorum_run_container_definition}",
@@ -77,12 +77,12 @@ locals {
   ]
 
   container_definitions_for_constellation = [
-    "${local.qrm_common_container_definitions}",
+    "${local.quorum_common_container_definitions}",
     "${local.constellation_run_container_definition}",
   ]
 
   container_definitions_for_tessera = [
-    "${local.qrm_common_container_definitions}",
+    "${local.quorum_common_container_definitions}",
     "${local.tessera_run_container_definition}",
   ]
 

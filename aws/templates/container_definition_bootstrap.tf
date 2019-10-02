@@ -288,7 +288,7 @@ EOP
     entryPoint = [
       "/bin/sh",
       "-c",
-      "${var.ethereum_flag == "yes" ? join("\n",local.eth_metadata_bootstrap_commands) : join("\n",local.quorum_metadata_bootstrap_commands)}",
+      "${var.is_ethereum_network == "true" ? join("\n",local.eth_metadata_bootstrap_commands) : join("\n",local.quorum_metadata_bootstrap_commands)}",
     ]
 
     dockerLabels = "${local.common_tags}"

@@ -103,7 +103,7 @@ touch terraform.tfvars
 
 Populate `terraform.tfvars` with the below template, replacing the subnet IDs with the corresponding IDs for the VPC subnets being used.
 
-```toml
+```hcl
 is_igw_subnets = "false"
 
 # private subnets routable to Internet via NAT Gateway
@@ -120,12 +120,6 @@ consensus_mechanism = "istanbul"
 
 # tx_privacy_engine = "constellation"
 
-# ethereum_flag = "yes"
-# ethereum_ver1_9 = "yes"
-number_of_nodes = "4"
-# quorum_docker_image = "amalrajmani/quorum"
-# quorum_docker_image_tag = "eth1.9.0"
-
  access_bastion_cidr_blocks = [
    "190.190.190.190/32",
  ]
@@ -134,15 +128,20 @@ number_of_nodes = "4"
 * `subnet_ids`: ECS will provision containers in these subnets. The subnets must be routable to the Internet (either because they are public subnets by default or because they are private subnets routed via NAT Gateway)
 * `is_igw_subnets`: `true` if the above `subnet_ids` are attached with Internet Gateway, `false` otherwise
 * `bastion_public_subnet_id`: where Bastion node is provisioned. This must be a public subnet
-* `consensus_mechanism`: the default value is `raft`. must be set to `clique` for ethereum.
 * `tx_privacy_engine`: the default value is `tessera`
-* `ethereum_flag`: if the platform is  quorum or ethereum. the default value is `no`
-* `ethereum_ver1_9`: if the ethereum version is 1.9 or not. the default value is `no`
-* `quorum_docker_image`: ethereum/quorum docker image. note the image must have `geth` and `bootndde`. the default is `quorumengineering/quorum`
-* `quorum_docker_image_tag`: docker image tag. the default is `latest`
-* `number_of_nodes`: number of nodes. the default value is `7`  
 * `access_bastion_cidr_blocks`: In order to access the Bastion node from a particular IP/set of IPs the corresponding CIDR blocks must be set
+
 **Note:** [`variables.tf`](templates/variables.tf) contains full options to configure the network
+
+To create an Ethereum private network use following:
+
+```hcl
+consensus_mechanism     = "clique"
+is_ethereum_network     = "true"
+is_ethereum_v1_9_x      = "true"
+quorum_docker_image     = "ethereum/client-go"
+quorum_docker_image_tag = "alltools-v1.9.5"
+```
 
 ### Step 4: Deploy the network
 
