@@ -16,6 +16,7 @@ locals {
     "echo \"\" > ${local.quorum_password_file}",
     "bootnode -genkey ${local.quorum_data_dir}/geth/nodekey",
     "export NODE_ID=$(bootnode -nodekey ${local.quorum_data_dir}/geth/nodekey -writeaddress)",
+    "geth version",
     "echo Creating an account for this node",
     "geth --datadir ${local.quorum_data_dir} account new --password ${local.quorum_password_file}",
     "export KEYSTORE_FILE=$(ls ${local.quorum_data_dir}/keystore/ | head -n1)",
@@ -110,6 +111,14 @@ func main() {
 }
 EOP
 
+
+  // bootstrap the extraData, this must be used inside metadata_bootstrap_commands to inherit metadata info
+  clique_bootstrap_commands = [
+    "all=\"0x0000000000000000000000000000000000000000000000000000000000000000\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); all=\"$all$(echo $address)\"; done;all=\"$all$(echo 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)\";",
+    "echo clique signer Addresses: $all",
+    "extraData=\"\\\"$(echo $all)\\\"\"",
+  ]
+
   // bootstrap the extraData, this must be used inside metadata_bootstrap_commands to inherit metadata info
   istanbul_bootstrap_commands = [
     "apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.7/community go=1.9.4-r0",
@@ -124,7 +133,7 @@ EOP
     "extraData=\"\\\"$(go run /istanbul-tools/src/github.com/getamis/istanbul-tools/cmd/istanbul/main.go extra encode --validators $all | awk -F: '{print $2}' | tr -d ' ')\\\"\"",
   ]
 
-  metadata_bootstrap_commands = [
+  quorum_metadata_bootstrap_commands = [
     "set -e",
     "echo Wait until Node Key is ready ...",
     "while [ ! -f \"${local.node_id_file}\" ]; do sleep 1; done",
@@ -166,9 +175,10 @@ EOP
     "alloc=\"{$${alloc:1}}\"",
     "extraData=\"\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\"\"",
     "${var.consensus_mechanism == "istanbul" ? join("\n", local.istanbul_bootstrap_commands) : ""}",
+    "${var.consensus_mechanism == "clique" ? join("\n", local.clique_bootstrap_commands) : ""}",
     "mixHash=\"\\\"${element(local.consensus_config_map["genesis_mixHash"], 0)}\\\"\"",
     "difficulty=\"\\\"${element(local.consensus_config_map["genesis_difficulty"], 0)}\\\"\"",
-    "echo '${replace(jsonencode(local.genesis), "/\"(true|false|[0-9]+)\"/", "$1")}' | jq \". + { alloc : $alloc, extraData: $extraData, mixHash: $mixHash, difficulty: $difficulty}${var.consensus_mechanism == "istanbul" ? " | .config=.config + {istanbul: {epoch: 30000, policy: 0} }" : ""}\" > ${local.genesis_file}",
+    "echo '${replace(jsonencode(local.quorum_genesis), "/\"(true|false|[0-9]+)\"/", "$1")}' | jq \". + { alloc : $alloc, extraData: $extraData, mixHash: $mixHash, difficulty: $difficulty}${var.consensus_mechanism == "istanbul" ? " | .config=.config + {istanbul: {epoch: 30000, policy: 0} }" : ""}${var.consensus_mechanism == "clique" ? " | .config=.config + {clique: {epoch: 30000, period: 1} }" : ""}\" > ${local.genesis_file}",
     "cat ${local.genesis_file}",
 
     // Write status
@@ -179,9 +189,61 @@ EOP
     "aws s3 cp ${local.tx_privacy_engine_address_file} s3://${local.s3_revision_folder}/privacyaddresses/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
   ]
 
+  eth_metadata_bootstrap_commands = [
+    "set -e",
+    "echo Wait until Node Key is ready ...",
+    "while [ ! -f \"${local.node_id_file}\" ]; do sleep 1; done",
+    "apk update",
+    "apk add curl jq",
+    "export TASK_REVISION=$(curl -s 169.254.170.2/v2/metadata | jq '.Revision' -r)",
+    "echo \"Task Revision: $TASK_REVISION\"",
+    "echo $TASK_REVISION > ${local.task_revision_file}",
+    "export HOST_IP=$(curl -s 169.254.170.2/v2/metadata | jq '.Containers[] | select(.Name == \"${local.metadata_bootstrap_container_name}\") | .Networks[] | select(.NetworkMode == \"awsvpc\") | .IPv4Addresses[0]' -r )",
+    "echo \"Host IP: $HOST_IP\"",
+    "echo $HOST_IP > ${local.host_ip_file}",
+    "export TASK_ARN=$(curl -s 169.254.170.2/v2/metadata | jq -r '.TaskARN')",
+    "aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $TASK_ARN | jq -r '.tasks[0] | .group' > ${local.service_file}",
+    "mkdir -p ${local.hosts_folder}",
+    "mkdir -p ${local.node_ids_folder}",
+    "mkdir -p ${local.accounts_folder}",
+    "aws s3 cp ${local.node_id_file} s3://${local.s3_revision_folder}/nodeids/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
+    "aws s3 cp ${local.host_ip_file} s3://${local.s3_revision_folder}/hosts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
+    "aws s3 cp ${local.account_address_file} s3://${local.s3_revision_folder}/accounts/${local.normalized_host_ip} --sse aws:kms --sse-kms-key-id ${aws_kms_key.bucket.arn}",
+
+    // Gather all IPs
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do count=$(ls ${local.hosts_folder} | grep ^ip | wc -l); aws s3 cp --recursive s3://${local.s3_revision_folder}/hosts ${local.hosts_folder} > /dev/null 2>&1 | echo \"Wait for other containers to report their IPs ... $count/${var.number_of_nodes}\"; sleep 1; done",
+
+    "echo \"All containers have reported their IPs\"",
+
+    // Gather all Accounts
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do count=$(ls ${local.accounts_folder} | grep ^ip | wc -l); aws s3 cp --recursive s3://${local.s3_revision_folder}/accounts ${local.accounts_folder} > /dev/null 2>&1 | echo \"Wait for other nodes to report their accounts ... $count/${var.number_of_nodes}\"; sleep 1; done",
+
+    "echo \"All nodes have registered accounts\"",
+
+    // Gather all Node IDs
+    "count=0; while [ $count -lt ${var.number_of_nodes} ]; do count=$(ls ${local.node_ids_folder} | grep ^ip | wc -l); aws s3 cp --recursive s3://${local.s3_revision_folder}/nodeids ${local.node_ids_folder} > /dev/null 2>&1 | echo \"Wait for other nodes to report their IDs ... $count/${var.number_of_nodes}\"; sleep 1; done",
+
+    "echo \"All nodes have registered their IDs\"",
+
+    // Prepare Genesis file
+    "alloc=\"\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); alloc=\"$alloc,\\\"$address\\\": { \"balance\": \"\\\"1000000000000000000000000000\\\"\"}\"; done",
+
+    "alloc=\"{$${alloc:1}}\"",
+    "extraData=\"\\\"0x0000000000000000000000000000000000000000000000000000000000000000\\\"\"",
+    "${join("\n", local.clique_bootstrap_commands)}",
+    "mixHash=\"\\\"${element(local.consensus_config_map["genesis_mixHash"], 0)}\\\"\"",
+    "difficulty=\"\\\"${element(local.consensus_config_map["genesis_difficulty"], 0)}\\\"\"",
+    "echo '${replace(jsonencode(local.eth_genesis), "/\"(true|false|[0-9]+)\"/", "$1")}' | jq \". + { alloc : $alloc, extraData: $extraData, mixHash: $mixHash, difficulty: $difficulty}${var.consensus_mechanism == "clique" ? " | .config=.config + {clique: {epoch: 30000, period: 1} }" : ""}\" > ${local.genesis_file}",
+    "cat ${local.genesis_file}",
+
+    // Write status
+    "echo \"Done!\" > ${local.metadata_bootstrap_container_status_file}",
+
+  ]
+
   metadata_bootstrap_container_definition = {
-    name      = "${local.metadata_bootstrap_container_name}"
-    image     = "${local.aws_cli_docker_image}"
+    name = "${local.metadata_bootstrap_container_name}"
+    image = "${local.aws_cli_docker_image}"
     essential = "false"
 
     logConfiguration = {
@@ -196,7 +258,7 @@ EOP
 
     mountPoints = [
       {
-        sourceVolume  = "${local.shared_volume_name}"
+        sourceVolume = "${local.shared_volume_name}"
         containerPath = "${local.shared_volume_container_path}"
       },
     ]
@@ -226,7 +288,7 @@ EOP
     entryPoint = [
       "/bin/sh",
       "-c",
-      "${join("\n", local.metadata_bootstrap_commands)}",
+      "${var.ethereum_flag == "yes" ? join("\n",local.eth_metadata_bootstrap_commands) : join("\n",local.quorum_metadata_bootstrap_commands)}",
     ]
 
     dockerLabels = "${local.common_tags}"

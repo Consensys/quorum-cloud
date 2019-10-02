@@ -69,6 +69,18 @@ variable "consensus_mechanism" {
   default     = "raft"
 }
 
+variable "ethereum_flag" {
+  type = "string"
+  description = "indicates if the platform used is ethereum or quorum. if it is ethereum then tessera is turned off and clique consensus is used. Supported values are yes/no"
+  default     = "no"
+}
+
+variable "ethereum_ver1_9" {
+  type = "string"
+  description = "indicates if the ethereum version is 1.9. Supported values are yes/no"
+  default     = "no"
+}
+
 variable "tx_privacy_engine" {
   description = "Engine that implements transaction privacy. Supported values are constellation/tessera"
   default     = "tessera"
