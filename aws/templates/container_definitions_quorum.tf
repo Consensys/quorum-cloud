@@ -43,6 +43,7 @@ locals {
     "--verbosity 5",
     "--debug",
     "--identity $IDENTITY",
+    "${var.is_ethereum_v1_9_x == "true" ? "--allow-insecure-unlock" : ""}",
     "--ethstats \"$IDENTITY:${random_id.ethstat_secret.hex}@${aws_instance.bastion.private_ip}:${local.ethstats_port}\"",
   ]
 
@@ -54,6 +55,15 @@ locals {
     "while [ ! -f \"${local.metadata_bootstrap_container_status_file}\" ]; do sleep 1; done",
     "echo Wait until ${var.tx_privacy_engine} is ready ...",
     "while [ ! -S \"${local.tx_privacy_engine_socket_file}\" ]; do sleep 1; done",
+    "${local.quorum_config_commands}",
+    "echo 'Running geth with: ${local.geth_args_combined}'",
+    "geth ${local.geth_args_combined}",
+  ]
+
+  eth_run_commands = [
+    "set -e",
+    "echo Wait until metadata bootstrap completed ...",
+    "while [ ! -f \"${local.metadata_bootstrap_container_status_file}\" ]; do sleep 1; done",
     "${local.quorum_config_commands}",
     "echo 'Running geth with: ${local.geth_args_combined}'",
     "geth ${local.geth_args_combined}",
@@ -124,7 +134,64 @@ locals {
     cpu = 0
   }
 
-  genesis = {
+  eth_run_container_definition = {
+    name = "${local.quorum_run_container_name}"
+    image = "${local.quorum_docker_image}"
+    essential = "true"
+
+    logConfiguration = {
+      logDriver = "awslogs"
+
+      options = {
+        awslogs-group = "${aws_cloudwatch_log_group.quorum.name}"
+        awslogs-region = "${var.region}"
+        awslogs-stream-prefix = "logs"
+      }
+    }
+
+    mountPoints = [
+      {
+        sourceVolume = "${local.shared_volume_name}"
+        containerPath = "${local.shared_volume_container_path}"
+      },
+    ]
+
+    healthCheck = {
+      interval = 30
+      retries = 10
+      timeout = 60
+      startPeriod = 300
+
+      command = [
+        "CMD-SHELL",
+        "[ -S ${local.quorum_data_dir}/geth.ipc ];",
+      ]
+    }
+
+    environments = []
+
+    portMappings = []
+
+    volumesFrom = [
+      {
+        sourceContainer = "${local.metadata_bootstrap_container_name}"
+      }
+    ]
+
+    environment = []
+
+    entrypoint = [
+      "/bin/sh",
+      "-c",
+      "${join("\n",local.eth_run_commands)}",
+    ]
+
+    dockerLabels = "${local.common_tags}"
+
+    cpu = 0
+  }
+
+  quorum_genesis = {
     "alloc" = {}
 
     "coinbase" = "0x0000000000000000000000000000000000000000"
@@ -139,6 +206,31 @@ locals {
       "eip150Hash" = "0x0000000000000000000000000000000000000000000000000000000000000000"
       "eip158Block" = 0
       "isQuorum" = "true"
+    }
+
+    "difficulty" = "0x0"
+    "extraData" = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    "gasLimit" = "0xE0000000"
+    "mixHash" = "0x00000000000000000000000000000000000000647572616c65787365646c6578"
+    "nonce" = "0x0"
+    "parentHash" = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    "timestamp" = "0x00"
+  }
+
+  eth_genesis = {
+    "alloc" = {}
+
+    "coinbase" = "0x0000000000000000000000000000000000000000"
+
+    "config" = {
+      "homesteadBlock" = 0
+      "byzantiumBlock" = 0
+      "constantinopleBlock" = 0
+      "chainId" = "${random_integer.network_id.result}"
+      "eip150Block" = 0
+      "eip155Block" = 0
+      "eip150Hash" = "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "eip158Block" = 0
     }
 
     "difficulty" = "0x0"

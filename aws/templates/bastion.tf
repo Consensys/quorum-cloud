@@ -100,8 +100,8 @@ EOF
   tags = "${merge(local.common_tags, map("Name", local.default_bastion_resource_name))}"
 }
 
-resource "local_file" "bootstrap" {
-  filename = "${path.module}/generated-bootstrap.sh"
+resource "local_file" "quorum_bootstrap" {
+  filename = "${path.module}/generated-bootstrap-qrm.sh"
 
   content = <<EOF
 #!/bin/bash
@@ -170,15 +170,84 @@ done
 EOF
 }
 
+resource "local_file" "eth_bootstrap" {
+  filename = "${path.module}/generated-bootstrap-eth.sh"
+
+  content = <<EOF
+#!/bin/bash
+
+set -e
+
+export AWS_DEFAULT_REGION=${var.region}
+export TASK_REVISION=${aws_ecs_task_definition.quorum.revision}
+echo "ethereum clique..."
+sudo rm -rf ${local.shared_volume_container_path}
+sudo mkdir -p ${local.shared_volume_container_path}/mappings
+sudo mkdir -p ${local.node_ids_folder}
+
+count=0
+while [ $count -lt ${var.number_of_nodes} ]
+do
+  count=$(ls ${local.node_ids_folder} |grep ^ip | wc -l)
+  sudo aws s3 cp --recursive s3://${local.s3_revision_folder}/ ${local.shared_volume_container_path}/ > /dev/null 2>&1 \
+    | echo Wait for nodes in Ethereum network being up ... $count/${var.number_of_nodes}
+  sleep 1
+done
+
+if which jq >/dev/null; then
+  echo "Found jq"
+else
+  echo "jq not found. Instaling ..."
+  sudo yum -y install jq
+fi
+
+for t in `aws ecs list-tasks --cluster ${local.ecs_cluster_name} | jq -r .taskArns[]`
+do
+  task_metadata=$(aws ecs describe-tasks --cluster ${local.ecs_cluster_name} --tasks $t)
+  HOST_IP=$(echo $task_metadata | jq -r '.tasks[0] | .containers[] | select(.name == "${local.quorum_run_container_name}") | .networkInterfaces[] | .privateIpv4Address')
+  group=$(echo $task_metadata | jq -r '.tasks[0] | .group')
+  taskArn=$(echo $task_metadata | jq -r '.tasks[0] | .taskDefinitionArn')
+  # only care about new task
+  if [[ "$taskArn" == *:$TASK_REVISION ]]; then
+     echo $group | sudo tee ${local.shared_volume_container_path}/mappings/${local.normalized_host_ip}
+  fi
+done
+
+cat <<SS | sudo tee ${local.shared_volume_container_path}/quorum_metadata
+quorum:
+  nodes:
+SS
+nodes=(${join(" ", aws_ecs_service.quorum.*.name)})
+cd ${local.shared_volume_container_path}/mappings
+for idx in "$${!nodes[@]}"
+do
+  f=$(grep -l $${nodes[$idx]} *)
+  ip=$(cat ${local.hosts_folder}/$f)
+  nodeIdx=$((idx+1))
+  script="/usr/local/bin/Node$nodeIdx"
+  cat <<SS | sudo tee $script
+#!/bin/bash
+
+sudo docker run --rm -it --entrypoint geth ${local.quorum_docker_image} attach http://$ip:${local.quorum_rpc_port} $@
+SS
+  sudo chmod +x $script
+  cat <<SS | sudo tee -a ${local.shared_volume_container_path}/quorum_metadata
+    Node$nodeIdx:
+      url: http://$ip:${local.quorum_rpc_port}
+SS
+done
+EOF
+}
+
 resource "null_resource" "bastion_remote_exec" {
   triggers {
     bastion = "${aws_instance.bastion.public_dns}"
     ecs_task_definition = "${aws_ecs_task_definition.quorum.revision}"
-    script = "${md5(local_file.bootstrap.content)}"
+    script = "${var.is_ethereum_network == "true"? md5(local_file.eth_bootstrap.content) : md5(local_file.quorum_bootstrap.content)}"
   }
 
   provisioner "remote-exec" {
-    script = "${local_file.bootstrap.filename}"
+    script = "${var.is_ethereum_network == "true"? local_file.eth_bootstrap.filename : local_file.quorum_bootstrap.filename}"
 
     connection {
       host = "${aws_instance.bastion.public_ip}"

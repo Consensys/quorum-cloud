@@ -43,31 +43,55 @@ locals {
 
       git_url = ["https://github.com/getamis/istanbul-tools"]
     }
+
+    clique = {
+      geth_args = [
+        "--syncmode full",
+        "--mine",
+        "--minerthreads 1",
+      ]
+      enode_params = []
+      genesis_mixHash    = ["0x0000000000000000000000000000000000000000000000000000000000000000"]
+      genesis_difficulty = ["0x01"]
+      git_url = [""]
+
+    }
   }
+
 
   tx_privacy_address_files = [
     "${var.tx_privacy_engine == "constellation" ? local.constellation_pub_key_file : ""}",
     "${var.tx_privacy_engine == "tessera" ? local.tessera_pub_key_file : ""}",
   ]
 
-  common_container_definitions = [
+  quorum_common_container_definitions = [
     "${local.node_key_bootstrap_container_definition}",
     "${local.metadata_bootstrap_container_definition}",
     "${local.quorum_run_container_definition}",
   ]
 
+  eth_common_container_definitions = [
+    "${local.node_key_bootstrap_container_definition}",
+    "${local.metadata_bootstrap_container_definition}",
+    "${local.eth_run_container_definition}",
+  ]
+
   container_definitions_for_constellation = [
-    "${local.common_container_definitions}",
+    "${local.quorum_common_container_definitions}",
     "${local.constellation_run_container_definition}",
   ]
 
   container_definitions_for_tessera = [
-    "${local.common_container_definitions}",
+    "${local.quorum_common_container_definitions}",
     "${local.tessera_run_container_definition}",
   ]
 
-  container_definitions = [
+  quorum_container_definitions = [
     "${var.tx_privacy_engine == "constellation" ? jsonencode(local.container_definitions_for_constellation) : ""}",
     "${var.tx_privacy_engine == "tessera" ? jsonencode(local.container_definitions_for_tessera) : ""}",
+  ]
+
+  eth_container_definitions = [
+    "${jsonencode(local.eth_common_container_definitions)}",
   ]
 }

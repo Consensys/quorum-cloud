@@ -103,7 +103,7 @@ touch terraform.tfvars
 
 Populate `terraform.tfvars` with the below template, replacing the subnet IDs with the corresponding IDs for the VPC subnets being used.
 
-```toml
+```hcl
 is_igw_subnets = "false"
 
 # private subnets routable to Internet via NAT Gateway
@@ -128,11 +128,20 @@ consensus_mechanism = "istanbul"
 * `subnet_ids`: ECS will provision containers in these subnets. The subnets must be routable to the Internet (either because they are public subnets by default or because they are private subnets routed via NAT Gateway)
 * `is_igw_subnets`: `true` if the above `subnet_ids` are attached with Internet Gateway, `false` otherwise
 * `bastion_public_subnet_id`: where Bastion node is provisioned. This must be a public subnet
-* `consensus_mechanism`: the default value is `raft`
 * `tx_privacy_engine`: the default value is `tessera`
 * `access_bastion_cidr_blocks`: In order to access the Bastion node from a particular IP/set of IPs the corresponding CIDR blocks must be set
 
 **Note:** [`variables.tf`](templates/variables.tf) contains full options to configure the network
+
+To create an Ethereum private network use following:
+
+```hcl
+consensus_mechanism     = "clique"
+is_ethereum_network     = "true"
+is_ethereum_v1_9_x      = "true"
+quorum_docker_image     = "ethereum/client-go"
+quorum_docker_image_tag = "alltools-v1.9.5"
+```
 
 ### Step 4: Deploy the network
 

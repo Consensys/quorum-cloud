@@ -85,7 +85,7 @@ case "$TESSERA_VERSION" in
   },
   "alwaysSendTo": []
 }
-EOF    
+EOF
       ;;
     "$V08")
       # use enhanced config
