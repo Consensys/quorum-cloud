@@ -5,7 +5,7 @@ provider "aws" {
 locals {
   tfinit_filename = "terraform.auto.backend_config"
   tfvars_filename = "terraform.auto.tfvars"
-  deployment_id   = "${coalesce(var.network_name, join("", random_id.deployment_id.*.b64_url))}"
+  deployment_id   = "${coalesce(var.network_name, random_id.deployment_id[0].b64_url)}"
 }
 
 data "aws_cloudformation_export" "state_bucket_name" {
@@ -21,7 +21,7 @@ data "aws_kms_alias" "state_bucket" {
 }
 
 resource "random_id" "deployment_id" {
-  count       = "${var.network_name == "" ? 1 : 0}"
+  count       = 1
   prefix      = "q-"
   byte_length = 8
 }
