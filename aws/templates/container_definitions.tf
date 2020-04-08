@@ -23,8 +23,6 @@ locals {
 
       genesis_mixHash    = ["0x00000000000000000000000000000000000000647572616c65787365646c6578"]
       genesis_difficulty = ["0x00"]
-
-      git_url = [""]
     }
 
     istanbul = {
@@ -40,8 +38,6 @@ locals {
 
       genesis_mixHash    = ["0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365"]
       genesis_difficulty = ["0x01"]
-
-      git_url = ["https://github.com/getamis/istanbul-tools"]
     }
 
     clique = {
@@ -53,7 +49,6 @@ locals {
       enode_params = []
       genesis_mixHash    = ["0x0000000000000000000000000000000000000000000000000000000000000000"]
       genesis_difficulty = ["0x01"]
-      git_url = [""]
 
     }
   }
