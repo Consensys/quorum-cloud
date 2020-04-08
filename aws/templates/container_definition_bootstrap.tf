@@ -78,40 +78,6 @@ locals {
     cpu = 0
   }
 
-  // this is very BADDDDDD but for now i don't have any other better option
-  validator_address_program = <<EOP
-package main
-
-import (
-	"encoding/hex"
-	"fmt"
-	"os"
-
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/p2p/discover"
-)
-
-func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("missing enode value")
-		os.Exit(1)
-	}
-	enode := os.Args[1]
-	nodeId, err := discover.HexID(enode)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	pub, err := nodeId.Pubkey()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Printf("0x%s\n", hex.EncodeToString(crypto.PubkeyToAddress(*pub).Bytes()))
-}
-EOP
-
-
   // bootstrap the extraData, this must be used inside metadata_bootstrap_commands to inherit metadata info
   clique_bootstrap_commands = [
     "all=\"0x0000000000000000000000000000000000000000000000000000000000000000\"; for f in `ls ${local.accounts_folder}`; do address=$(cat ${local.accounts_folder}/$f); all=\"$all$(echo $address)\"; done;all=\"$all$(echo 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)\";",
@@ -121,16 +87,12 @@ EOP
 
   // bootstrap the extraData, this must be used inside metadata_bootstrap_commands to inherit metadata info
   istanbul_bootstrap_commands = [
-    "apk add --repository http://dl-cdn.alpinelinux.org/alpine/v3.7/community go=1.9.4-r0",
-    "apk add git gcc musl-dev linux-headers",
-    "git clone ${element(local.consensus_config_map["git_url"], 0)} /istanbul-tools/src/github.com/getamis/istanbul-tools",
-    "export GOPATH=/istanbul-tools",
-    "export GOROOT=/usr/lib/go",
-    "echo '${local.validator_address_program}' > /istanbul-tools/src/github.com/getamis/istanbul-tools/extra.go",
-    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do address=$(cat ${local.node_ids_folder}/$f); all=\"$all,$(go run /istanbul-tools/src/github.com/getamis/istanbul-tools/extra.go $address)\"; done",
+    "curl -L https://dl.bintray.com/quorumengineering/istanbul-tools/istanbul-tools_v1.0.2_linux_amd64.tar.gz -o tools.tar.gz",
+    "tar xfvz tools.tar.gz",
+    "all=\"\"; for f in `ls ${local.node_ids_folder}`; do address=$(cat ${local.node_ids_folder}/$f); all=\"$all,$(./istanbul address --nodeidhex $address)\"; done",
     "all=\"$${all:1}\"",
     "echo Validator Addresses: $all",
-    "extraData=\"\\\"$(go run /istanbul-tools/src/github.com/getamis/istanbul-tools/cmd/istanbul/main.go extra encode --validators $all | awk -F: '{print $2}' | tr -d ' ')\\\"\"",
+    "extraData=\"\\\"$(./istanbul extra encode --validators $all | awk -F: '{print $2}' | tr -d ' ')\\\"\"",
   ]
 
   quorum_metadata_bootstrap_commands = [
